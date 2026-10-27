@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'yocret'  # セッション用の秘密鍵
+app.secret_key = 'your_secret'  # セッション用の秘密鍵
 
 @app.route('/')
 def profile():
