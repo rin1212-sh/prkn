@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>接続切り替え画面</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* 静的なグラデーション背景 */
+      background: linear-gradient(135deg, 
+        #f08080 0%, 
+        #f5b083 25%, 
+        #f3e082 50%, 
+        #82cbba 75%, 
+        #2a92ba 100%
+      );
+      color: #0b0000;
+      position: relative;
+    }
+
+    /* 各画面のレイアウト設定 */
+    .screen {
+      width: 100%;
+      height: 100%;
+      max-width: 1440px;
+      max-height: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 50px 40px;
+      text-align: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      z-index: 1;
+    }
+
+    /* 非表示状態 */
+    .screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* 表示状態 */
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* タイトル */
+    .title {
+      color: #FFFFFF;
+      font-size: clamp(32px, 4.5vw, 60px);
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      margin-top: 10px;
+      pointer-events: none;
+    }
+
+    /* メッセージ・段落 */
+    .message-container {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      max-width: 1100px;
+      width: 100%;
+      margin: auto 0;
+      pointer-events: none;
+    }
+
+    .message {
+      font-size: clamp(20px, 2.8vw, 40px);
+      font-weight: 700;
+      line-height: 1.5;
+      color: #1a1a1a;
+      white-space: pre-line;
+    }
+
+    /* 入力エリア */
+    .input-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: auto 0;
+    }
+
+    .subtitle {
+      color: #FFFFFF;
+      font-size: clamp(20px, 2.5vw, 36px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+    }
+
+    /* 入力画面の警告注意書き */
+    .inline-warning {
+      font-size: clamp(14px, 1.6vw, 20px);
+      font-weight: 700;
+      color: #c62828;
+      background: rgba(255, 255, 255, 0.75);
+      padding: 10px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      display: inline-block;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(4px);
+    }
+
+    textarea {
+      width: 100%;
+      height: 260px;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 24px;
+      padding: 24px;
+      font-size: 24px;
+      color: #0b0000;
+      resize: none;
+      outline: none;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 20;
+    }
+
+    textarea:focus {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.9);
+    }
+
+    textarea::placeholder {
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    /* ボタンエリア */
+    .button-group {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 100;
+    }
+
+    .btn {
+      background: rgba(217, 217, 217, 0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50px;
+      color: #0B0000;
+      font-size: clamp(20px, 2.6vw, 40px);
+      font-weight: 700;
+      padding: 20px 40px;
+      cursor: pointer !important;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      position: relative;
+      z-index: 101;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      background: rgba(217, 217, 217, 0.5);
+    }
+
+    .btn-end {
+      min-width: 200px;
+    }
+
+    .btn-next {
+      min-width: 480px;
+    }
+
+    .btn-save {
+      min-width: 380px;
+    }
+
+    /* モーダルダイアログ */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      background: #FFFFFF;
+      padding: 36px 32px;
+      border-radius: 24px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: #222;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .modal-btn {
+      border: none;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-btn-confirm {
+      background: #e53935;
+      color: white;
+    }
+
+    .modal-btn-confirm:hover {
+      background: #c62828;
+    }
+
+    .modal-btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .modal-btn-cancel:hover {
+      background: #d5d5d5;
+    }
+
+    @media (max-width: 768px) {
+      .button-group {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .btn {
+        width: 100%;
+        min-width: auto !important;
+        padding: 15px 20px;
+      }
+      textarea {
+        height: 180px;
+      }
+      .modal-buttons {
+        flex-direction: column;
+      }
+      .modal-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1枚目の画面：接続切断画面 -->
+  <div id="screen1" class="screen active">
+    <h1 class="title">接続は切れました</h1>
+
+    <div class="message-container">
+      <p class="message">あなたの人生とは逆の選択をした<br>もう一人の自分と話してみてどうでしたか？</p>
+      <p class="message">貴方は自分が選択しなかった<br>人生の可能性を感じたことでしょう。</p>
+      <p class="message">さあ、貴方は明日からはどんな選択をしますか？</p>
+    </div>
+
+    <div class="button-group">
+      <button type="button" class="btn btn-end" onclick="handleEnd()">終わる</button>
+      <button type="button" class="btn btn-next" onclick="goToScreen2()">今後どうするか文字にする</button>
+    </div>
+  </div>
+
+  <!-- 2枚目の画面：文字入力画面 -->
+  <div id="screen2" class="screen hidden">
+    <h1 class="title">あなたはこれからどんな選択をしますか</h1>
+
+    <div class="input-container">
+      <p class="subtitle">まずは書き留めてみましょう</p>
+      
+      <!-- 入力欄の上の注意事項 -->
+      <div class="inline-warning">
+        ※入力した内容は保存されません。メモに残したい場合は「心に保存する」を押す前に手元にメモしてください。
+      </div>
+
+      <textarea id="userInput" placeholder="ここにあなたの思いを入力してください..."></textarea>
+    </div>
+
+    <div class="button-group">
+      <button type="button" class="btn btn-save" onclick="handleSave()">心に保存する</button>
+    </div>
+  </div>
+
+  <!-- 注意事項ポップアップ（確認画面） -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-box">
+      <p class="modal-text">
+        入力された内容は保存されずに消去されます。<br>
+        よろしいですか？
+      </p>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal()">入力画面に戻る</button>
+        <button type="button" class="modal-btn modal-btn-confirm" onclick="confirmReset()">OK（最初の画面に戻る）</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 別で用意している「最初の画面」のURLがある場合はここに指定してください
+    // 例: const INITIAL_PAGE_URL = 'top.html';
+    const INITIAL_PAGE_URL = 'index.html';
+
+    // 「今後どうするか文字にする」を押したとき（画面1 → 画面2）
+    function goToScreen2() {
+      document.getElementById('screen1').classList.remove('active');
+      document.getElementById('screen1').classList.add('hidden');
+      
+      document.getElementById('screen2').classList.remove('hidden');
+      document.getElementById('screen2').classList.add('active');
+    }
+
+    // 「終わる」を押したとき（最初に戻る）
+    function handleEnd() {
+      if (INITIAL_PAGE_URL) {
+        window.location.href = INITIAL_PAGE_URL;
+      } else {
+        resetToScreen1();
+      }
+    }
+
+    // 「心に保存する」を押したとき（確認用ポップアップを表示）
+    function handleSave() {
+      document.getElementById('modal').classList.add('active');
+    }
+
+    // 「入力画面に戻る」を押したとき（ポップアップを閉じてそのままの入力状態を保持）
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    // 「OK（最初の画面に戻る）」を押したとき
+    function confirmReset() {
+      document.getElementById('modal').classList.remove('active');
+      if (INITIAL_PAGE_URL) {
+        window.location.href = INITIAL_PAGE_URL;
+      } else {
+        resetToScreen1();
+      }
+    }
+
+    // 1枚目の画面状態にリセット
+    function resetToScreen1() {
+      document.getElementById('userInput').value = ''; // テキスト入力欄をリセット
+      document.getElementById('screen2').classList.remove('active');
+      document.getElementById('screen2').classList.add('hidden');
+      
+      document.getElementById('screen1').classList.remove('hidden');
+      document.getElementById('screen1').classList.add('active');
+    }
+  </script>
+</body>
+</html>

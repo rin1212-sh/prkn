@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallel-World Self - AI Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* 全体コンテナ（共通背景） */
+    .container {
+      width: 100vw;
+      height: 100vh;
+      background: url('image/haikei.png') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2rem 1.5rem 1.5rem;
+      position: relative;
+    }
+
+    /* 文字視認性確保のためのダークオーバーレイ */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 1;
+    }
+
+    /* 全ての要素をオーバーレイの上に配置 */
+    .main-wrapper {
+      position: relative;
+      z-index: 2;
+      width: min(1187px, 94vw);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      align-items: center;
+    }
+
+    /* 1. チャットログ表示エリア */
+    .chat-box {
+      width: 100%;
+      flex: 1;
+      background: rgba(217, 217, 217, 0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* チャットメッセージ共通スタイル */
+    .message-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      max-width: 85%;
+    }
+
+    /* AIのメッセージ（左寄せ） */
+    .message-row.ai {
+      align-self: flex-start;
+    }
+
+    /* ユーザーのメッセージ（右寄せ） */
+    .message-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    /* アイコン */
+    .avatar {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .avatar.ai {
+      background: rgba(0, 240, 255, 0.25);
+      border: 2px solid #0EFEF6;
+      color: #0EFEF6;
+    }
+
+    .avatar.user {
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid #ffffff;
+      color: #ffffff;
+    }
+
+    /* 吹き出しバブル */
+    .bubble {
+      padding: 1rem 1.2rem;
+      border-radius: 16px;
+      font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+      line-height: 1.6;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      word-break: break-word;
+    }
+
+    .message-row.ai .bubble {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      border-top-left-radius: 4px;
+    }
+
+    .message-row.user .bubble {
+      background: rgba(14, 254, 246, 0.25);
+      border: 1px solid #0EFEF6;
+      color: #ffffff;
+      border-top-right-radius: 4px;
+    }
+
+    /* 2. 入力コントロールエリア */
+    .input-container {
+      width: 100%;
+      background: rgba(217, 217, 217, 0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 0.8rem 1.2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
+    }
+
+    .chat-input {
+      flex: 1;
+      height: 48px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 2px solid #10FBE3;
+      border-radius: 8px;
+      padding: 0 1.2rem;
+      color: #ffffff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    .chat-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .chat-input:focus {
+      border-color: #0EFEF6;
+      box-shadow: 0 0 15px rgba(14, 254, 246, 0.6);
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .send-btn {
+      width: 130px;
+      height: 48px;
+      background: #0EFEF6;
+      border: none;
+      border-radius: 8px;
+      color: #0B0000;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(14, 254, 246, 0.5);
+    }
+
+    .send-btn:hover {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+      transform: scale(1.02);
+    }
+
+    /* 3. 別世界との接続を切るボタン */
+    .disconnect-btn-wrapper {
+      margin-bottom: 0.5rem;
+    }
+
+    .disconnect-btn {
+      width: min(530px, 85vw);
+      height: 60px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      color: #0B0000;
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .disconnect-btn:hover {
+      background: #ff4b4b;
+      border-color: #ff4b4b;
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(255, 75, 75, 0.7);
+      transform: scale(1.02);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="main-wrapper">
+
+      <!-- 1. 会話エリア -->
+      <div class="chat-box" id="chatBox">
+        
+        <!-- AI発言 -->
+        <div class="message-row ai">
+          <div class="avatar ai">AI</div>
+          <div class="bubble">
+            やあ、別の世界線を生きる私だよ。君があの時違う道を選択した世界の姿だ。何か聞いてみたいことはあるかい？
+          </div>
+        </div>
+
+        <!-- ユーザー発言 -->
+        <div class="message-row user">
+          <div class="avatar user">人</div>
+          <div class="bubble">
+            そっちの世界では、どんな仕事をしてどんな毎日を過ごしているの？
+          </div>
+        </div>
+
+        <!-- AI発言 -->
+        <div class="message-row ai">
+          <div class="avatar ai">AI</div>
+          <div class="bubble">
+            ここでは自分の直感を信じて新しいチームを立ち上げたんだ。大変なことも多いけれど、本音で語り合える仲間に囲まれて刺激的な日々を送っているよ。
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 2. 入力フォーム -->
+      <div class="input-container">
+        <input type="text" class="chat-input" id="messageInput" placeholder="テキスト入力" onkeypress="handleKeyPress(event)">
+        <button class="send-btn" onclick="sendMessage()">送信</button>
+      </div>
+
+      <!-- 3. 切断ボタン -->
+      <div class="disconnect-btn-wrapper">
+        <button class="disconnect-btn" onclick="location.href='finish.html';">別世界との接続を切る</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // メッセージ送信機能（疑似動作）
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatBox = document.getElementById('chatBox');
+
+      // ユーザーメッセージを追加
+      const userRow = document.createElement('div');
+      userRow.className = 'message-row user';
+      userRow.innerHTML = `
+        <div class="avatar user">人</div>
+        <div class="bubble">${escapeHTML(text)}</div>
+      `;
+      chatBox.appendChild(userRow);
+
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // 簡易AI返信ダミー（バックエンド構築時にリアルタイムAPIに置き換え）
+      setTimeout(() => {
+        const aiRow = document.createElement('div');
+        aiRow.className = 'message-row ai';
+        aiRow.innerHTML = `
+          <div class="avatar ai">AI</div>
+          <div class="bubble">なるほど……君のいる世界線ではそう考えるんだね。面白いな。</div>
+        `;
+        chatBox.appendChild(aiRow);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 1000);
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+  </script>
+</body>
+</html>
