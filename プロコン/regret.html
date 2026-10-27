@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallel-World Self - Final Question</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    /* 全体コンテナ（共通のメッシュグラデーション） */
+    .container {
+      width: 100vw;
+      min-height: 100vh;
+      /* ここを共通の背景画像にする */
+      background: url('image/haikei.png') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center; /* 画面によっては指定がない場合もあるよ */
+      padding: 2.5rem 1.5rem;
+      position: relative;
+    }
+    /* 背景画像の上に少し暗いオーバーレイを敷いて文字を読みやすくする */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3); /* 30%の黒（数字を 0.4 や 0.5 にするともっと暗くなるよ） */
+      z-index: 1;
+    }
+
+    /* 中身の要素が暗幕の上（手前）に表示されるようにする指定 */
+    .container > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ヘッダータイトル */
+    .header-title {
+      font-size: clamp(1.5rem, 3.2vw, 2.6rem);
+      font-weight: 700;
+      color: #F8F3F3;
+      text-align: center;
+      margin-bottom: 0.6rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      line-height: 1.4;
+    }
+    .header-sub {
+      font-size: clamp(1rem, 1.8vw, 1.4rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      margin-bottom: 2rem;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* メインコンテンツエリア */
+    .content-container {
+      width: min(1100px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: 2.2rem;
+      align-items: center;
+    }
+
+    /* 大きなテキストエリア用のグループ */
+    .textarea-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    /* 大きな自由入力欄（<textarea>） */
+    .form-textarea {
+      width: 100%;
+      height: 380px; /* 高さを少し広げて下に空きすぎないように調整 */
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      color: #ffffff;
+      outline: none;
+      resize: none;
+      transition: all 0.3s ease;
+      line-height: 1.6;
+      font-family: 'Inter', sans-serif;
+    }
+    .form-textarea::placeholder {
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .form-textarea:focus {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    /* 次へボタン */
+    .submit-btn-wrapper {
+      display: flex;
+      justify-content: center;
+    }
+
+    .submit-btn {
+      width: min(240px, 60vw);
+      height: 60px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .submit-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: #00F0FF;
+      color: #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- ヘッダー -->
+    <h1 class="header-title">今までの人生で最も後悔していることや<br>あの時こうしたかったことがほかにあれば教えてください</h1>
+    <p class="header-sub">これが最後の質問です。</p>
+
+    <div class="content-container">
+
+      <!-- 大きな入力エリア -->
+      <div class="textarea-group">
+        <textarea class="form-textarea" placeholder="例：あの時別の選択肢を選んでいればどうなっていたか、本当は挑戦したかったことなどを自由に書いてください..."></textarea>
+      </div>
+
+      <!-- 次へボタン -->
+      <div class="submit-btn-wrapper">
+        <button class="submit-btn" onclick="location.href='loading.html';">次へ</button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

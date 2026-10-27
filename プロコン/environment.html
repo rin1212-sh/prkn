@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallel-World Self - Environment Selection</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    /* 全体コンテナ（共通のメッシュグラデーション） */
+    .container {
+      width: 100vw;
+      min-height: 100vh;
+      /* ここを共通の背景画像にする */
+      background: url('image/haikei.png') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center; /* 画面によっては指定がない場合もあるよ */
+      padding: 2.5rem 1.5rem;
+      position: relative;
+    }
+
+    /* 背景画像の上に少し暗いオーバーレイを敷いて文字を読みやすくする */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3); /* 30%の黒（数字を 0.4 や 0.5 にするともっと暗くなるよ） */
+      z-index: 1;
+    }
+
+    /* 中身の要素が暗幕の上（手前）に表示されるようにする指定 */
+    .container > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ヘッダータイトル */
+    .header-title {
+      font-size: clamp(1.8rem, 3.8vw, 3.5rem);
+      font-weight: 700;
+      color: #F8F3F3;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .header-sub {
+      font-size: clamp(1rem, 2vw, 1.8rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      margin-bottom: 2rem;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* メインコンテンツエリア */
+    .content-container {
+      width: min(1200px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    /* カードグリッド（4枚用） */
+    .card-section-title {
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .card-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      justify-items: center;
+    }
+
+    /* タロットカード（枠なし・画像主体） */
+    .tarot-card {
+      width: 100%;
+      max-width: 226px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tarot-card:hover {
+      transform: translateY(-8px) scale(1.03);
+    }
+
+    .tarot-card.selected .tarot-card-image {
+      border-color: #00F0FF;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.8);
+    }
+
+    /* タロットカード画像本体（226x303の比率） */
+    .tarot-card-image {
+      width: 100%;
+      aspect-ratio: 226 / 303;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .card-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* 入力フォームグループ */
+    .form-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .form-label {
+      font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 65px;
+      padding: 0 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      font-size: clamp(1rem, 1.5vw, 1.25rem);
+      color: #ffffff;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .form-input:focus {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    /* 次へボタン */
+    .submit-btn-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .submit-btn {
+      width: min(240px, 60vw);
+      height: 60px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .submit-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: #00F0FF;
+      color: #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1 class="header-title">貴方はどんな人生を歩んできましたか？</h1>
+    <p class="header-sub">どのような環境に身を置いてきましたか</p>
+
+    <div class="content-container">
+
+      <div class="card-section-title">直感で環境を表すカードを選択してください</div>
+      
+      <!-- 環境カード一覧（4枚） -->
+      <div class="card-grid-4">
+
+        <div class="tarot-card selected" onclick="selectCard(this)">
+          <img src="image\seityou.jpg"
+ alt="環境A" class="tarot-card-image">
+          <div class="card-name">成長</div>
+        </div>
+
+        <div class="tarot-card" onclick="selectCard(this)">
+          <img src="image\annsinn.jpg"
+ alt="環境B" class="tarot-card-image">
+          <div class="card-name">安心</div>
+        </div>
+
+        <div class="tarot-card" onclick="selectCard(this)">
+          <img src="image\anntei.jpg" alt="環境C" class="tarot-card-image">
+          <div class="card-name">安定</div>
+        </div>
+
+        <div class="tarot-card" onclick="selectCard(this)">
+          <img src="image\jiyuu.jpg"
+ alt="環境D" class="tarot-card-image">
+          <div class="card-name">自由</div>
+        </div>
+
+      </div>
+
+      <!-- 入力フォーム -->
+      <div class="form-group">
+        <label class="form-label">どのような環境に身を置いてきましたか</label>
+        <input type="text" class="form-input" placeholder="例：大学の学部での研究活動や、チームでの開発環境に身を置いてきた">
+      </div>
+
+      <!-- 次へボタン -->
+      <div class="submit-btn-wrapper">
+        <button class="submit-btn" onclick="location.href='friendship.html';">次へ</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function selectCard(element) {
+      document.querySelectorAll('.tarot-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      element.classList.add('selected');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallel-World Self - Profile</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100vw;
+      min-height: 100vh;
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      position: relative;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 1;
+    }
+
+    .container > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .header-title {
+      font-size: clamp(1.8rem, 4vw, 3.5rem);
+      font-weight: 700;
+      color: #F8F3F3;
+      text-align: center;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .header-sub {
+      font-size: clamp(1rem, 2vw, 1.8rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
+      text-align: center;
+      margin-bottom: 2rem;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    .form-container {
+      width: min(1000px, 90vw);
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .form-input {
+      width: 100%;
+      height: 60px;
+      padding: 0 1.2rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      font-size: clamp(1rem, 1.5vw, 1.3rem);
+      color: #ffffff;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .form-input:focus {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: #00F0FF;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+
+    .tone-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .tone-card {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 0.8rem;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 80px;
+    }
+    .tone-card:hover {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.8);
+      transform: translateY(-2px);
+    }
+    .tone-card.selected {
+      background: rgba(0, 240, 255, 0.25);
+      border-color: #00F0FF;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+
+    .tone-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 0.2rem;
+    }
+    .tone-desc {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.3;
+    }
+
+    .submit-btn-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .submit-btn {
+      width: min(240px, 60vw);
+      height: 60px;
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .submit-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: #00F0FF;
+      color: #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      transform: scale(1.03);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1 class="header-title">あなたについて教えてください</h1>
+    <p class="header-sub">別世界の自分と話すために今の自分の情報を教えてください</p>
+
+    <!-- form タグで囲み、action="/save-profile" method="POST" に設定 -->
+    <form class="form-container" action="/save-profile" method="POST">
+      
+      <!-- 1. 立場・職業 -->
+      <div class="form-group">
+        <label class="form-label">現在の立場・職業を教えてください</label>
+        <input type="text" name="job" class="form-input" placeholder="例：情報学部の大学生、ITエンジニア" required>
+      </div>
+
+      <!-- 2. 性格 -->
+      <div class="form-group">
+        <label class="form-label">自分の性格を簡潔に教えてください</label>
+        <input type="text" name="personality" class="form-input" placeholder="例：安定、自由、冷静" required>
+      </div>
+
+      <!-- 3. 一人称 -->
+      <div class="form-group">
+        <label class="form-label">普段の一人称を教えてください</label>
+        <input type="text" name="first_person" class="form-input" placeholder="例：私、僕、俺" required>
+      </div>
+
+      <!-- 4. 口調選択 -->
+      <div class="form-group">
+        <label class="form-label">普段の口調に近いものを選択してください</label>
+        
+        <!-- 選択された口調を送信するための隠し要素 -->
+        <input type="hidden" name="tone" id="selectedTone" value="丁寧">
+
+        <div class="tone-grid">
+          <div class="tone-card selected" onclick="selectTone(this, '丁寧')">
+            <div class="tone-title">丁寧</div>
+            <div class="tone-desc">です・ます調で<br>落ち着いた話し方</div>
+          </div>
+
+          <div class="tone-card" onclick="selectTone(this, 'フランク')">
+            <div class="tone-title">フランク</div>
+            <div class="tone-desc">ため口で、<br>友達と話すような感じ</div>
+          </div>
+
+          <div class="tone-card" onclick="selectTone(this, '素直')">
+            <div class="tone-title">素直</div>
+            <div class="tone-desc">思ったことを<br>ストレートに伝える</div>
+          </div>
+
+          <div class="tone-card" onclick="selectTone(this, '淡々')">
+            <div class="tone-title">淡々</div>
+            <div class="tone-desc">感情表現は控え目で<br>簡潔に話す</div>
+          </div>
+
+          <div class="tone-card" onclick="selectTone(this, '明るい・ノリがいい')">
+            <div class="tone-title">明るい・ノリがいい</div>
+            <div class="tone-desc">冗談や<br>リアクションが多い</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ボタン -->
+      <div class="submit-btn-wrapper">
+        <button type="submit" class="submit-btn">次へ</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    // 口調選択の処理（隠しinputの値も書き換える）
+    function selectTone(element, toneValue) {
+      document.querySelectorAll('.tone-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      element.classList.add('selected');
+      
+      // hidden input の値を更新
+      document.getElementById('selectedTone').value = toneValue;
+    }
+  </script>
+</body>
+</html>
