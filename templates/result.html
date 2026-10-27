@@ -19,18 +19,17 @@
       overflow-x: hidden;
     }
 
-    /* 全体コンテナ（ご提示いただいた画像を背景に設定） */
+        /* 全体コンテナ（共通のメッシュグラデーション） */
     .container {
       width: 100vw;
       min-height: 100vh;
-      background: url('image/haikei.png') center center / cover no-repeat;
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;  
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2.5rem 1.5rem;
       position: relative;
-      gap: 2rem;
     }
 
     /* 背景画像の上に少し暗いオーバーレイを敷いて文字を見やすくする */
@@ -150,9 +149,9 @@
 
     </div>
 
-    <!-- 会話に進むボタン -->
+    <!-- 会話に進むボタン（/chat へ遷移） -->
     <div class="submit-btn-wrapper">
-      <button class="submit-btn" onclick="location.href='chat.html';">会話に進む</button>
+      <button class="submit-btn" onclick="location.href='/chat';">会話に進む</button>
     </div>
 
   </div>

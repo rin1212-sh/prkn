@@ -3,9 +3,15 @@ from flask import Flask, render_template, request, redirect, url_for, session
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # セッション用の秘密鍵
 
+# 【変更】一番最初は index.html（トップ画面）を表示する
 @app.route('/')
+def index():
+    return render_template('index.html')
+
+# 【変更】「別世界の自分と話す」を押したあとのプロフィール入力画面
+@app.route('/profile')
 def profile():
-    return render_template('profile.html') # プロフィール入力画面
+    return render_template('profile.html')
 
 @app.route('/save-profile', methods=['POST'])
 def save_profile():
@@ -15,19 +21,18 @@ def save_profile():
     first_person = request.form.get('first_person')
     tone = request.form.get('tone')
 
-    # セッション（あるいはデータベース）に保存
     session['user_profile'] = {
         'job': job,
         'personality': personality,
         'first_person': first_person,
         'tone': tone
     }
-
-    # 取得したデータをターミナルで確認してみる
+    
     print("保存されたプロフィール:", session['user_profile'])
-
-    # career.html（次の画面）へリダイレクト
     return redirect(url_for('career'))
+
+# （ここから先はこれまでの career, environment, friendship, challenge, regret, loading, result, chat, finish のルートが続きます！）
+
 
 @app.route('/career')
 def career():
@@ -162,7 +167,29 @@ def save_regret():
 
 @app.route('/loading')
 def loading():
+    # ローディング画面を表示する（HTML内のJSで数秒後に /result へ飛ぶ）
     return render_template('loading.html')
+
+@app.route('/result')
+def result():
+    # セッションから全データを取得
+    user_data = session.get('user_profile', {})
+    
+    # 【ここにAI生成処理を入れる予定！】
+    # 例: ユーザーの回答(user_data)を元にGeminiにプロンプトを投げてパラレルセルフの設定を作る
+    
+    return render_template('result.html', data=user_data)
+
+@app.route('/chat')
+def chat():
+    # 会話画面を表示するルート
+    user_data = session.get('user_profile', {})
+    return render_template('chat.html', data=user_data)
+
+@app.route('/finish')
+def finish():
+    # すべての体験が終了した画面
+    return render_template('finish.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
