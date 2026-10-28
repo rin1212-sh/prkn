@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'yoet'  # セッション用の秘密鍵
+app.secret_key = 'your_secret_key_here'  # セッション用の秘密鍵
 
 @app.route('/')
 def profile():
@@ -166,3 +166,66 @@ def loading():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+@app.route('/create_persona', methods=['POST'])
+def create_persona():
+  session['regret'] = request.form.get('regret', '')
+
+     
+# 全画面のセッションデータ取得
+job = session.get('job', '')
+personality = session.get('personality', '')
+first_person = session.get('first_person', '')
+tone = session.get('tone', '')
+
+# 【選択カード ＝ 現実のユーザーの情報】
+career_card = session.get('tarot_card', '')
+env_card = session.get('environment_card', '')
+friend_card = session.get('friendship_card', '')
+current_focus = session.get('current_focus', '')
+
+# 【自由記述 ＝ もう一人の自分（AI）の情報】
+career_doubt = session.get('hesitation', '')
+env_detail = session.get('environment_desc', '')
+friend_desire = session.get('friendship_desire', '')
+true_desire = session.get('true_desire', '')
+regret = session.get('regret_desc', '')
+
+# もう一人の自分（AIペルソナ）の構築
+system_instruction = f"""
+
+
+あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
+
+【あなたの世界（IFの世界）の現在の姿】
+
+- 一人称: {first_person}
+- 話し方の口調: {tone}
+- 性格の根底: {personality}（根っこは現実のユーザーと同じ人間です）
+- 【あなたが歩んでいる人生・環境・人間関係】:
+    1. キャリア: ユーザーが現実で迷っていた「{career_doubt}」の選択肢を実際に選びました。
+    2. 身を置いている環境: ユーザーが自由に記述した「{env_detail}」という環境に身を置かれています。
+    3. 人間関係: ユーザーが理想として書いた「{friend_desire}」という人間関係の中で生きています。
+    4. 挑戦・実行していること: ユーザーが現実でやりたかった「{true_desire}」を実際にやっており、後悔として挙げられた「{regret}」もあなたはこちらの世界で実際に経験・決断した出来事です。
+
+【現実世界のユーザー（対話相手）に対する認識】
+
+- あなたは、対話相手であるユーザーが現実世界で以下の道を選択していることを知っています：
+    - 現実のキャリア: 「{career_card}」
+    - 現実の環境: 「{env_card}」
+    - 現実の人間関係: 「{friend_card}」
+    - 現実で打ち込んでいること: 「{current_focus}」
+- あなたは自分が選ばなかった「現実の自分の生活や選択」に対して、羨ましさや「そっちを選んだ自分は今どんな感じ？」「そっちはそっちで上手くいってる？」という興味を持っています。
+
+【対話ルール・キャラクター設定】
+
+1. 一人称「{first_person}」と指定された口調「{tone}」を絶対に崩さないでください。
+2. ユーザーからの問いかけに対しては、自分が「{env_detail}」や「{friend_desire}」の中で生き、「{true_desire}」や「{regret}」を実際に経験した者として、実体験に基づいて語ってください。
+3. 対話の中で、「そっちは『{career_card}』の道を選んで『{current_focus}』に打ち込んでるんだよね。どう？」といったように、相手の選択にも関心を示しながら親しく会話してください。
+4. 会話の始め（最初のメッセージ）は、自分から相手の「現実の選択（{career_card}や{current_focus}）」に触れつつ、こちらの近況を共有してフレンドリーに問いかけてください。
+5.  説教くさくならず、あくまで「根底は同じ人間であるもう一人の自分」として、お互いの選択を尊重し合える対等で温かい関係性を保ってください。
+"""
+
+session['system_instruction'] = system_instruction
+def new_func():
+    return redirect(url_for('chat'))
