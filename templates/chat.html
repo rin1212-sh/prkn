@@ -19,16 +19,16 @@
       overflow: hidden;
     }
 
-    /* 全体コンテナ（共通背景） */
+     /* 全体コンテナ（共通のメッシュグラデーション） */
     .container {
       width: 100vw;
-      height: 100vh;
-      background: url('image/haikei.png') center center / cover no-repeat;
+      min-height: 100vh;
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;  
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 2rem 1.5rem 1.5rem;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
       position: relative;
     }
 
@@ -270,9 +270,9 @@
         <button class="send-btn" onclick="sendMessage()">送信</button>
       </div>
 
-      <!-- 3. 切断ボタン -->
+     <!-- 3. 切断ボタン（/finish へ遷移） -->
       <div class="disconnect-btn-wrapper">
-        <button class="disconnect-btn" onclick="location.href='finish.html';">別世界との接続を切る</button>
+        <button class="disconnect-btn" onclick="location.href='/finish';">別世界との接続を切る</button>
       </div>
 
     </div>
