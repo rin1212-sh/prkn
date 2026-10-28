@@ -167,7 +167,7 @@ def loading():
 if __name__ == '__main__':
     app.run(debug=True)
 
-@app.route('/create_persona', methods=['POST'])
+@app.route('/result', methods=['POST'])
 def create_persona():
   session['regret'] = request.form.get('regret', '')
 
