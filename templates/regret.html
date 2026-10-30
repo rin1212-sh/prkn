@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parallel-World Self - Final Question</title>
+  <title>Parallel World Self - Final Question</title>
+  
+  <!-- タロット・ミステリアス風フォント（Cinzel & Shippori Mincho）の読み込み -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
     * {
       box-sizing: border-box;
@@ -13,17 +19,17 @@
     body, html {
       width: 100%;
       min-height: 100vh;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Shippori Mincho', 'Cinzel', serif;
       background: #000;
       color: #ffffff;
       overflow-x: hidden;
     }
 
-    /* 全体コンテナ（共通のメッシュグラデーション） */
+    /* 全体コンテナ */
     .container {
       width: 100vw;
       min-height: 100vh;
-      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;  
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat fixed;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -31,6 +37,7 @@
       padding: 2.5rem 1.5rem;
       position: relative;
     }
+
     .container::before {
       content: '';
       position: absolute;
@@ -38,39 +45,57 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(5, 5, 14, 0.7); /* 最後の質問のため深みのある暗さ */
       z-index: 1;
     }
+
     .container > * {
       position: relative;
       z-index: 2;
     }
 
-    /* ヘッダータイトル */
-    .header-title {
-      font-size: clamp(1.5rem, 3.2vw, 2.6rem);
-      font-weight: 700;
-      color: #F8F3F3;
-      text-align: center;
-      margin-bottom: 0.6rem;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      line-height: 1.4;
-    }
-    .header-sub {
-      font-size: clamp(1rem, 1.8vw, 1.4rem);
-      font-weight: 400;
-      color: rgba(255, 255, 255, 0.9);
-      text-align: center;
-      margin-bottom: 2rem;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
-
-    /* メインコンテンツエリア（formタグに変更） */
-    .content-container {
-      width: min(1100px, 92vw);
+    /* ヘッダーエリア */
+    .header-group {
       display: flex;
       flex-direction: column;
-      gap: 2.2rem;
+      align-items: center;
+      text-align: center;
+      gap: 0.8rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .header-title {
+      font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+      font-weight: 800;
+      color: #f7f3e8;
+      text-align: center;
+      letter-spacing: 0.06em;
+      text-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 4px 10px rgba(0,0,0,0.8);
+      line-height: 1.5;
+    }
+
+    .header-sub {
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
+      font-weight: 500;
+      color: #0efeef; /* 最後の質問として青白く発光 */
+      letter-spacing: 0.15em;
+      text-shadow: 0 0 10px rgba(14, 254, 239, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .header-sub::before, .header-sub::after {
+      content: '✦';
+      font-size: 0.8em;
+    }
+
+    /* メインコンテンツエリア */
+    .content-container {
+      width: min(1000px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
       align-items: center;
     }
 
@@ -78,80 +103,95 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.8rem;
     }
 
+    /* 高級感のあるゴールド＆すりガラスのテキストエリア */
     .form-textarea {
       width: 100%;
-      height: 380px;
+      height: 320px;
       padding: 1.5rem;
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      border-radius: 16px;
+      background: rgba(15, 18, 28, 0.65);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 12px;
       backdrop-filter: blur(10px);
-      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(1rem, 1.4vw, 1.15rem);
       color: #ffffff;
       outline: none;
       resize: none;
       transition: all 0.3s ease;
-      line-height: 1.6;
-      font-family: 'Inter', sans-serif;
-    }
-    .form-textarea::placeholder {
-      color: rgba(255, 255, 255, 0.65);
-    }
-    .form-textarea:focus {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: #00F0FF;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      line-height: 1.8;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
     }
 
+    .form-textarea::placeholder {
+      color: rgba(220, 215, 200, 0.35);
+    }
+
+    .form-textarea:focus {
+      background: rgba(15, 18, 28, 0.85);
+      border-color: #0efeef;
+      box-shadow: 0 0 22px rgba(14, 254, 239, 0.5), inset 0 0 10px rgba(14, 254, 239, 0.2);
+    }
+
+    /* 送信ボタン（最後の儀式用デザイン） */
     .submit-btn-wrapper {
       display: flex;
       justify-content: center;
+      margin-top: 0.5rem;
     }
 
     .submit-btn {
-      width: min(240px, 60vw);
-      height: 60px;
-      background: rgba(255, 255, 255, 0.25);
-      border: 2px solid rgba(255, 255, 255, 0.5);
+      width: min(340px, 80vw);
+      height: 65px;
+      background: rgba(212, 175, 55, 0.2);
+      border: 2px solid #d4af37;
       border-radius: 50px;
       backdrop-filter: blur(10px);
-      color: #ffffff;
-      font-size: 1.5rem;
-      font-weight: 800;
+      color: #f7f3e8;
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+      font-weight: 700;
+      letter-spacing: 0.15em;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      transition: all 0.4s ease;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+      outline: none;
     }
+
     .submit-btn:hover {
-      background: rgba(255, 255, 255, 0.4);
-      border-color: #00F0FF;
-      color: #00F0FF;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
-      transform: scale(1.03);
+      background: #d4af37;
+      color: #050b14;
+      box-shadow: 0 0 40px rgba(212, 175, 55, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+      transform: scale(1.04);
     }
   </style>
 </head>
 <body>
 
   <div class="container">
+    
     <!-- ヘッダー -->
-    <h1 class="header-title">今までの人生で最も後悔していることや<br>あの時こうしたかったことがほかにあれば教えてください</h1>
-    <p class="header-sub">これが最後の質問です。</p>
+    <div class="header-group">
+      <h1 class="header-title">
+        今までの人生で最も後悔していることや<br>
+        あの時これをしておきたかった、などがあれば教えてください
+      </h1>
+      <p class="header-sub">これが最後の質問です</p>
+    </div>
 
-    <!-- formタグで囲み、POSTで /save-regret に送信 -->
+    <!-- フォーム部分 -->
     <form action="/save-regret" method="POST" class="content-container">
 
-      <!-- 大きな入力エリア（name属性を付与） -->
+      <!-- テキストエリア -->
       <div class="textarea-group">
         <textarea name="regret_desc" class="form-textarea" placeholder="例：あの時別の選択肢を選んでいればどうなっていたか、本当は挑戦したかったことなどを自由に書いてください..." required></textarea>
       </div>
 
-      <!-- 次へボタン（type="submit" に変更） -->
+      <!-- 送信ボタン（最終決定用） -->
       <div class="submit-btn-wrapper">
-        <button type="submit" class="submit-btn">次へ</button>
+        <button type="submit" class="submit-btn">別世界の自分を見る</button>
       </div>
 
     </form>

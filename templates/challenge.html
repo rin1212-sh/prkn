@@ -4,30 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PARALLEL ME｜人生のアンケート - Challenge</title>
+  
+  <!-- タロット・ミステリアス風フォント（Cinzel & Shippori Mincho）の読み込み -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    :root {
-      color-scheme: dark;
-    }
     body, html {
       width: 100%;
       min-height: 100vh;
-      font-family: Inter, "Noto Sans JP", "Yu Gothic", sans-serif;
-      color: #fff;
-      background: #101525;
+      font-family: 'Shippori Mincho', 'Cinzel', serif;
+      background: #000;
+      color: #ffffff;
       overflow-x: hidden;
     }
 
-    /* 全体コンテナ（共通背景＆縦方向の中央配置） */
-     /* 全体コンテナ（共通のメッシュグラデーション） */
+    /* 全体コンテナ */
     .container {
       width: 100vw;
       min-height: 100vh;
-      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat fixed;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -36,7 +38,6 @@
       position: relative;
     }
 
-    /* 背景の視認性を高めるための黒オーバーレイ */
     .container::before {
       content: '';
       position: absolute;
@@ -44,11 +45,10 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(5, 5, 14, 0.65);
       z-index: 1;
     }
 
-    /* 中身の要素をオーバーレイの上に配置 */
     .container > * {
       position: relative;
       z-index: 2;
@@ -61,28 +61,31 @@
       align-items: center;
       text-align: center;
       gap: 0.5rem;
+      /* ★ サブタイトルと下の質問エリアの間隔をしっかり開けるために余白を追加 */
+      margin-bottom: 3.5rem;
     }
 
     .header-title {
-      font-size: clamp(1.8rem, 3.5vw, 3rem);
-      font-weight: 700;
-      color: #F8F3F3;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      font-size: clamp(1.8rem, 3.8vw, 3.2rem);
+      font-weight: 800;
+      color: #f7f3e8;
+      letter-spacing: 0.06em;
+      text-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 4px 10px rgba(0,0,0,0.8);
     }
 
     .header-sub {
-      font-size: clamp(1.2rem, 2.2vw, 1.8rem);
-      font-weight: 400;
-      color: rgba(255, 255, 255, 0.9);
-      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      font-size: clamp(0.95rem, 1.8vw, 1.3rem);
+      font-weight: 500;
+      color: #c5c1b6;
+      letter-spacing: 0.05em;
     }
 
     /* フォーム全体のコンテナ */
     .form-container {
-      width: min(1221px, 92vw);
+      width: min(1000px, 92vw);
       display: flex;
       flex-direction: column;
-      gap: 2rem;
+      gap: 2.5rem;
       align-items: center;
     }
 
@@ -91,72 +94,76 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.8rem;
     }
 
     .input-label {
-      font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-      font-weight: 400;
-      color: #ffffff;
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      font-weight: 700;
+      color: #ebdcb9;
+      letter-spacing: 0.05em;
       text-align: center;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      line-height: 1.5;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }
 
-    /* すりガラス風の大きなテキストエリア */
+    /* すりガラス＆金枠風のテキストエリア */
     .form-textarea {
       width: 100%;
-      height: 137px;
+      height: 130px;
       padding: 1.2rem 1.5rem;
-      background: rgba(217, 217, 217, 0.18);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
-      font-size: clamp(1rem, 1.3vw, 1.2rem);
+      background: rgba(15, 18, 28, 0.65);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(1rem, 1.4vw, 1.15rem);
       color: #ffffff;
       outline: none;
       resize: none;
       transition: all 0.3s ease;
-      font-family: Inter, "Noto Sans JP", sans-serif;
-      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
     }
 
     .form-textarea::placeholder {
-      color: rgba(255, 255, 255, 0.55);
+      color: rgba(220, 215, 200, 0.35);
     }
 
     .form-textarea:focus {
-      background: rgba(217, 217, 217, 0.28);
-      border-color: #0EFEF6;
-      box-shadow: 0 0 20px rgba(14, 254, 246, 0.5);
+      background: rgba(15, 18, 28, 0.85);
+      border-color: #0efeef;
+      box-shadow: 0 0 18px rgba(14, 254, 239, 0.5), inset 0 0 8px rgba(14, 254, 239, 0.2);
     }
 
     /* 次へボタン */
     .submit-btn-wrapper {
       display: flex;
       justify-content: center;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
 
     .submit-btn {
-      width: min(236px, 60vw);
-      height: 65px;
-      background: rgba(217, 217, 217, 0.25);
-      border: 2px solid rgba(255, 255, 255, 0.4);
+      width: min(280px, 70vw);
+      height: 60px;
+      background: rgba(212, 175, 55, 0.15);
+      border: 2px solid #d4af37;
       border-radius: 50px;
       backdrop-filter: blur(10px);
-      color: #ffffff;
-      font-size: clamp(1.2rem, 1.8vw, 1.5rem);
-      font-weight: 900;
+      color: #f7f3e8;
+      font-family: 'Shippori Mincho', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.4s ease;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+      outline: none;
     }
 
     .submit-btn:hover {
-      background: rgba(255, 255, 255, 0.4);
-      border-color: #0EFEF6;
-      color: #0EFEF6;
-      box-shadow: 0 0 25px rgba(14, 254, 246, 0.6);
+      background: #d4af37;
+      color: #050b14;
+      box-shadow: 0 0 35px rgba(212, 175, 55, 0.8), 0 0 15px rgba(255, 255, 255, 0.6);
       transform: scale(1.03);
     }
   </style>
@@ -164,29 +171,29 @@
 <body>
 
   <div class="container">
-    
-    <!-- ヘッダータイトル -->
+   
+    <!-- ヘッダータイトル（サブタイトル下部に余白 margin-bottom: 3.5rem を設定） -->
     <div class="header-group">
       <h1 class="header-title">貴方はどんな人生を歩んできましたか？</h1>
       <p class="header-sub">貴方は人生でどんなことに挑戦してきましたか</p>
     </div>
 
-    <!-- フォームタグで全体を囲み、POSTで /save-challenge に送る -->
+    <!-- フォーム部分 -->
     <form action="/save-challenge" method="POST" class="form-container">
-      
-      <!-- 1つ目の質問 (name属性に challenge_card を指定) -->
+     
+      <!-- 1つ目の質問 -->
       <div class="input-group">
-        <label class="input-label">今現在貴方が打ち込んでいることは何ですか？（例:学業）</label>
+        <label class="input-label">今現在貴方が打ち込んでいることは何ですか？</label>
         <textarea name="utikomu_desc" class="form-textarea" placeholder="例：大学でのデータ分析やプログラミングの学習、資格の取得など..." required></textarea>
       </div>
 
-      <!-- 2つ目の質問 (name属性に challenge_desc を指定) -->
+      <!-- 2つ目の質問 -->
       <div class="input-group">
         <label class="input-label">本当はやりたかったことは何ですか？</label>
         <textarea name="yaritai_desc" class="form-textarea" placeholder="例：本当はもっとクリエイティブな表現や、別の分野への挑戦をしたかった..." required></textarea>
       </div>
 
-      <!-- 次へボタン (type="submit" に変更) -->
+      <!-- 次へボタン -->
       <div class="submit-btn-wrapper">
         <button type="submit" class="submit-btn">次へ</button>
       </div>
