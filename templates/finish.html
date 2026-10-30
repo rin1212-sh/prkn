@@ -5,216 +5,249 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>接続切り替え画面</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Zen Kaku Gothic New', sans-serif;
     }
 
     body {
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      /* 静的なグラデーション背景 */
-      background: linear-gradient(135deg, 
-        #f08080 0%, 
-        #f5b083 25%, 
-        #f3e082 50%, 
-        #82cbba 75%, 
-        #2a92ba 100%
-      );
-      color: #0b0000;
+      background: #060b13;
+      color: #e2e8f0;
       position: relative;
-    }
-
-    /* 各画面のレイアウト設定 */
-    .screen {
-      width: 100%;
-      height: 100%;
-      max-width: 1440px;
-      max-height: 900px;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: space-between;
-      padding: 50px 40px;
-      text-align: center;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    /* 背景グリッド＆グラデーション */
+    .bg-layer {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      margin: auto;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 50% 30%, rgba(0, 242, 254, 0.08) 0%, transparent 70%),
+        radial-gradient(circle at 50% 100%, rgba(10, 17, 30, 0.9) 0%, #04070d 100%);
       z-index: 1;
+      pointer-events: none;
     }
 
-    /* 非表示状態 */
+    /* ヘッダーエリア */
+    .header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .header-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(20px, 2.5vw, 28px);
+      letter-spacing: 0.25em;
+      color: #e2c275;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(226, 194, 117, 0.4);
+      margin-bottom: 6px;
+    }
+
+    .status-badge {
+      font-family: monospace;
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      color: #ff5252;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #ff5252;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff5252;
+    }
+
+    /* 各画面共通コンテナ */
+    .screen {
+      width: 100%;
+      max-width: 960px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+      transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+    }
+
     .screen.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      z-index: 0;
+      transform: scale(0.98);
+      position: absolute;
     }
 
-    /* 表示状態 */
     .screen.active {
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      z-index: 10;
+      transform: scale(1);
     }
 
     /* タイトル */
-    .title {
-      color: #FFFFFF;
-      font-size: clamp(32px, 4.5vw, 60px);
+    .main-title {
+      color: #ffffff;
+      font-size: clamp(22px, 3vw, 36px);
       font-weight: 700;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-      margin-top: 10px;
-      pointer-events: none;
+      letter-spacing: 0.05em;
+      margin-bottom: 30px;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
     }
 
-    /* メッセージ・段落 */
+    /* メッセージ・パネル */
     .message-container {
+      width: 100%;
+      background: rgba(10, 20, 32, 0.75);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: inset 0 0 20px rgba(0, 242, 254, 0.05), 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
-      gap: 32px;
-      max-width: 1100px;
-      width: 100%;
-      margin: auto 0;
-      pointer-events: none;
+      gap: 24px;
+      margin-bottom: 40px;
     }
 
     .message {
-      font-size: clamp(20px, 2.8vw, 40px);
-      font-weight: 700;
-      line-height: 1.5;
-      color: #1a1a1a;
+      font-size: clamp(16px, 1.8vw, 22px);
+      font-weight: 400;
+      line-height: 1.8;
+      color: #d1d5db;
+      text-align: center;
       white-space: pre-line;
     }
 
     /* 入力エリア */
     .input-container {
       width: 100%;
-      max-width: 900px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: auto 0;
     }
 
     .subtitle {
-      color: #FFFFFF;
-      font-size: clamp(20px, 2.5vw, 36px);
-      font-weight: 700;
+      color: #94a3b8;
+      font-size: clamp(16px, 1.8vw, 20px);
       margin-bottom: 12px;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      pointer-events: none;
     }
 
-    /* 入力画面の警告注意書き */
     .inline-warning {
-      font-size: clamp(14px, 1.6vw, 20px);
-      font-weight: 700;
-      color: #c62828;
-      background: rgba(255, 255, 255, 0.75);
-      padding: 10px 20px;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      display: inline-block;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      backdrop-filter: blur(4px);
+      font-size: 13px;
+      color: #ff8a8a;
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      padding: 8px 18px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     textarea {
       width: 100%;
-      height: 260px;
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 2px solid rgba(255, 255, 255, 0.5);
-      border-radius: 24px;
-      padding: 24px;
-      font-size: 24px;
-      color: #0b0000;
+      height: 220px;
+      background: rgba(6, 15, 25, 0.8);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 18px;
+      color: #f1f5f9;
       resize: none;
       outline: none;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
       transition: all 0.3s ease;
-      position: relative;
-      z-index: 20;
+      margin-bottom: 30px;
     }
 
     textarea:focus {
-      background: rgba(255, 255, 255, 0.35);
-      border-color: rgba(255, 255, 255, 0.9);
+      border-color: #00f2fe;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 242, 254, 0.25);
     }
 
     textarea::placeholder {
-      color: rgba(0, 0, 0, 0.4);
+      color: #475569;
     }
 
     /* ボタンエリア */
     .button-group {
       display: flex;
-      gap: 30px;
+      gap: 20px;
       justify-content: center;
       align-items: center;
       width: 100%;
-      max-width: 1200px;
-      margin-bottom: 20px;
-      position: relative;
-      z-index: 100;
     }
 
     .btn {
-      background: rgba(217, 217, 217, 0.3);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      border-radius: 50px;
-      color: #0B0000;
-      font-size: clamp(20px, 2.6vw, 40px);
-      font-weight: 700;
-      padding: 20px 40px;
+      background: rgba(10, 25, 40, 0.6);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      border-radius: 40px;
+      color: #00f2fe;
+      font-size: clamp(16px, 1.6vw, 20px);
+      font-weight: 500;
+      padding: 14px 36px;
       cursor: pointer !important;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
       display: flex;
       justify-content: center;
       align-items: center;
       text-decoration: none;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      position: relative;
-      z-index: 101;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       user-select: none;
     }
 
     .btn:hover {
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(0, 242, 254, 0.15);
+      border-color: #00f2fe;
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     }
 
     .btn:active {
       transform: translateY(1px);
-      background: rgba(217, 217, 217, 0.5);
     }
 
     .btn-end {
-      min-width: 200px;
+      min-width: 160px;
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #94a3b8;
     }
 
-    .btn-next {
-      min-width: 480px;
+    .btn-end:hover {
+      border-color: #ff5252;
+      color: #ff5252;
+      background: rgba(255, 82, 82, 0.1);
+      box-shadow: 0 0 15px rgba(255, 82, 82, 0.3);
     }
 
-    .btn-save {
-      min-width: 380px;
+    .btn-next, .btn-save {
+      min-width: 320px;
+      background: rgba(0, 242, 254, 0.08);
     }
 
     /* モーダルダイアログ */
@@ -224,8 +257,8 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(6px);
+      background: rgba(3, 7, 13, 0.85);
+      backdrop-filter: blur(8px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -241,20 +274,20 @@
     }
 
     .modal-box {
-      background: #FFFFFF;
+      background: #0a111e;
+      border: 1px solid rgba(0, 242, 254, 0.3);
       padding: 36px 32px;
-      border-radius: 24px;
-      max-width: 520px;
+      border-radius: 16px;
+      max-width: 460px;
       width: 90%;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 242, 254, 0.15);
     }
 
     .modal-text {
-      font-size: 20px;
-      font-weight: 700;
-      color: #222;
-      line-height: 1.6;
+      font-size: 17px;
+      color: #e2e8f0;
+      line-height: 1.7;
       margin-bottom: 28px;
     }
 
@@ -262,64 +295,73 @@
       display: flex;
       gap: 16px;
       justify-content: center;
-      flex-wrap: wrap;
     }
 
     .modal-btn {
       border: none;
-      padding: 14px 28px;
-      font-size: 18px;
-      font-weight: 700;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
       border-radius: 30px;
       cursor: pointer;
       transition: all 0.2s;
+      flex: 1;
     }
 
     .modal-btn-confirm {
-      background: #e53935;
-      color: white;
+      background: rgba(255, 82, 82, 0.2);
+      border: 1px solid #ff5252;
+      color: #ff8a8a;
     }
 
     .modal-btn-confirm:hover {
-      background: #c62828;
+      background: #ff5252;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(255, 82, 82, 0.5);
     }
 
     .modal-btn-cancel {
-      background: #e0e0e0;
-      color: #333;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
     }
 
     .modal-btn-cancel:hover {
-      background: #d5d5d5;
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
     }
 
     @media (max-width: 768px) {
       .button-group {
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
       }
       .btn {
         width: 100%;
         min-width: auto !important;
-        padding: 15px 20px;
-      }
-      textarea {
-        height: 180px;
       }
       .modal-buttons {
         flex-direction: column;
-      }
-      .modal-btn {
-        width: 100%;
       }
     }
   </style>
 </head>
 <body>
 
+  <div class="bg-layer"></div>
+
+  <!-- ヘッダー (画像のデザインを継承) -->
+  <header class="header">
+    <div class="header-title">PARALLEL WORLD DIALOGUE</div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      PARALLEL LINK: DISCONNECTED
+    </div>
+  </header>
+
   <!-- 1枚目の画面：接続切断画面 -->
   <div id="screen1" class="screen active">
-    <h1 class="title">接続は切れました</h1>
+    <h1 class="main-title">接続は切れました</h1>
 
     <div class="message-container">
       <p class="message">あなたの人生とは逆の選択をした<br>もう一人の自分と話してみてどうでしたか？</p>
@@ -335,12 +377,11 @@
 
   <!-- 2枚目の画面：文字入力画面 -->
   <div id="screen2" class="screen hidden">
-    <h1 class="title">あなたはこれからどんな選択をしますか</h1>
+    <h1 class="main-title">あなたはこれからどんな選択をしますか</h1>
 
     <div class="input-container">
       <p class="subtitle">まずは書き留めてみましょう</p>
       
-      <!-- 入力欄の上の注意事項 -->
       <div class="inline-warning">
         ※入力した内容は保存されません。メモに残したい場合は「心に保存する」を押す前に手元にメモしてください。
       </div>
@@ -353,7 +394,7 @@
     </div>
   </div>
 
-  <!-- 注意事項ポップアップ（確認画面） -->
+  <!-- ポップアップ確認画面 -->
   <div id="modal" class="modal-overlay">
     <div class="modal-box">
       <p class="modal-text">
@@ -368,11 +409,8 @@
   </div>
 
   <script>
-    // 別で用意している「最初の画面」のURLがある場合はここに指定してください
-    // 例: const INITIAL_PAGE_URL = 'top.html';
     const INITIAL_PAGE_URL = '/';
 
-    // 「今後どうするか文字にする」を押したとき（画面1 → 画面2）
     function goToScreen2() {
       document.getElementById('screen1').classList.remove('active');
       document.getElementById('screen1').classList.add('hidden');
@@ -381,7 +419,6 @@
       document.getElementById('screen2').classList.add('active');
     }
 
-    // 「終わる」を押したとき（最初に戻る）
     function handleEnd() {
       if (INITIAL_PAGE_URL) {
         window.location.href = INITIAL_PAGE_URL;
@@ -390,17 +427,14 @@
       }
     }
 
-    // 「心に保存する」を押したとき（確認用ポップアップを表示）
     function handleSave() {
       document.getElementById('modal').classList.add('active');
     }
 
-    // 「入力画面に戻る」を押したとき（ポップアップを閉じてそのままの入力状態を保持）
     function closeModal() {
       document.getElementById('modal').classList.remove('active');
     }
 
-    // 「OK（最初の画面に戻る）」を押したとき
     function confirmReset() {
       document.getElementById('modal').classList.remove('active');
       if (INITIAL_PAGE_URL) {
@@ -410,9 +444,8 @@
       }
     }
 
-    // 1枚目の画面状態にリセット
     function resetToScreen1() {
-      document.getElementById('userInput').value = ''; // テキスト入力欄をリセット
+      document.getElementById('userInput').value = '';
       document.getElementById('screen2').classList.remove('active');
       document.getElementById('screen2').classList.add('hidden');
       

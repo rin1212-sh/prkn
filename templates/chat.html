@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Parallel-World Self - AI Chat</title>
+  
+  <!-- フォント読み込み（Cinzel & Shippori Mincho） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Shippori+Mincho:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
     * {
       box-sizing: border-box;
@@ -13,13 +19,13 @@
     body, html {
       width: 100%;
       height: 100vh;
-      font-family: 'Inter', sans-serif;
-      background: #000;
-      color: #ffffff;
+      font-family: 'Shippori Mincho', serif;
+      background: #050508;
+      color: #e2e8f0;
       overflow: hidden;
     }
 
-     /* 全体コンテナ（共通のメッシュグラデーション） */
+    /* 全体コンテナ */
     .container {
       width: 100vw;
       min-height: 100vh;
@@ -28,11 +34,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2.5rem 1.5rem;
+      padding: 1.5rem;
       position: relative;
     }
 
-    /* 文字視認性確保のためのダークオーバーレイ */
+    /* タロット風ダーク＆ルミナスオーバーレイ */
     .container::before {
       content: '';
       position: absolute;
@@ -40,17 +46,36 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.35);
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.4) 0%, rgba(5, 5, 8, 0.88) 100%);
       z-index: 1;
     }
 
-    /* メインエリアの高さ制限（全体が画面内に収まるように調整） */
+    /* 異世界通信の「走査线（スキャンライン）」エフェクト */
+    .scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(14, 254, 239, 0.03) 50%,
+        rgba(14, 254, 239, 0.03)
+      );
+      background-size: 100% 4px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* メインエリア */
     .main-wrapper {
       position: relative;
-      z-index: 2;
-      width: min(1187px, 94vw);
+      z-index: 3;
+      width: min(1000px, 94vw);
       height: 100vh;
-      max-height: calc(100vh - 5rem); /* 上下パディング分を引く */
+      max-height: calc(100vh - 3rem);
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -58,25 +83,73 @@
       justify-content: space-between;
     }
 
-    /* 1. チャットログ表示エリア（高さを固定してスクロール可能に） */
+    /* ヘッダーエリア（ステータス表示付き） */
+    .header-area {
+      text-align: center;
+      margin-top: 0.2rem;
+    }
+
+    .header-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.2rem, 2vw, 1.5rem);
+      letter-spacing: 0.25em;
+      color: #d4af37;
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+      text-transform: uppercase;
+    }
+
+    /* 異世界通信インジケーター */
+    .signal-status {
+      font-family: 'Cinzel', monospace;
+      font-size: 0.75rem;
+      color: #0efeef;
+      letter-spacing: 0.2em;
+      opacity: 0.8;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .signal-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #0efeef;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #0efeef;
+      animation: pulse 2s infinite;
+    }
+
+    /* 1. チャットログ表示エリア */
     .chat-box {
       width: 100%;
       flex: 1;
-      height: 55vh; /* 高さを画面の55%に制限 */
+      height: 55vh;
       min-height: 300px;
-      background: rgba(217, 217, 217, 0.15);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 16px;
-      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
-      padding: 1.5rem;
-      overflow-y: auto; /* 縦スクロールを有効化 */
+      background: rgba(13, 18, 30, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5),
+                  inset 0 0 15px rgba(212, 175, 55, 0.05);
+      padding: 1.8rem;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
 
-    /* チャットメッセージ共通スタイル */
+    .chat-box::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-box::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.4);
+      border-radius: 3px;
+    }
+
+    /* メッセージ行 */
     .message-row {
       display: flex;
       align-items: flex-start;
@@ -84,125 +157,136 @@
       max-width: 85%;
     }
 
-    /* AIのメッセージ（左寄せ） */
     .message-row.ai {
       align-self: flex-start;
     }
 
-    /* ユーザーのメッセージ（右寄せ） */
     .message-row.user {
       align-self: flex-end;
       flex-direction: row-reverse;
     }
 
-    /* アイコン */
+    /* アバター */
     .avatar {
-      width: 55px;
-      height: 55px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Cinzel', serif;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 0.85rem;
       flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      letter-spacing: 0.05em;
     }
 
     .avatar.ai {
-      background: rgba(0, 240, 255, 0.25);
-      border: 2px solid #0EFEF6;
-      color: #0EFEF6;
+      background: radial-gradient(circle, rgba(14, 254, 246, 0.25) 0%, rgba(5, 5, 8, 0.85) 100%);
+      border: 1.5px solid #0efeef;
+      color: #0efeef;
+      text-shadow: 0 0 8px rgba(14, 254, 239, 0.8);
+      box-shadow: 0 0 12px rgba(14, 254, 239, 0.3);
+      animation: hologram 4s infinite alternate;
     }
 
     .avatar.user {
-      background: rgba(255, 255, 255, 0.25);
-      border: 2px solid #ffffff;
-      color: #ffffff;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(5, 5, 8, 0.85) 100%);
+      border: 1.5px solid #d4af37;
+      color: #f3e5ab;
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
     }
 
     /* 吹き出しバブル */
     .bubble {
-      padding: 1rem 1.2rem;
+      padding: 1.1rem 1.4rem;
       border-radius: 16px;
-      font-size: clamp(0.95rem, 1.4vw, 1.1rem);
-      line-height: 1.6;
+      font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+      line-height: 1.7;
       backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      letter-spacing: 0.03em;
       word-break: break-word;
     }
 
     .message-row.ai .bubble {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-      border-top-left-radius: 4px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(14, 254, 239, 0.35);
+      color: #e2e8f0;
+      border-top-left-radius: 2px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 10px rgba(14, 254, 239, 0.08);
     }
 
     .message-row.user .bubble {
-      background: rgba(14, 254, 246, 0.25);
-      border: 1px solid #0EFEF6;
-      color: #ffffff;
-      border-top-right-radius: 4px;
+      background: rgba(30, 27, 20, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      color: #f8fafc;
+      border-top-right-radius: 2px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 10px rgba(212, 175, 55, 0.1);
     }
 
     /* 2. 入力コントロールエリア */
     .input-container {
       width: 100%;
-      background: rgba(217, 217, 217, 0.15);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(13, 18, 30, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.35);
       border-radius: 16px;
       padding: 0.8rem 1.2rem;
       display: flex;
       gap: 1rem;
       align-items: center;
-      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
     }
 
     .chat-input {
       flex: 1;
       height: 48px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 2px solid #10FBE3;
-      border-radius: 8px;
+      background: rgba(5, 5, 8, 0.6);
+      border: 1px solid rgba(14, 254, 239, 0.35);
+      border-radius: 10px;
       padding: 0 1.2rem;
       color: #ffffff;
+      font-family: 'Shippori Mincho', serif;
       font-size: 1rem;
       outline: none;
       transition: all 0.3s ease;
-      backdrop-filter: blur(5px);
     }
 
     .chat-input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(226, 232, 240, 0.4);
+      letter-spacing: 0.05em;
     }
 
     .chat-input:focus {
-      border-color: #0EFEF6;
-      box-shadow: 0 0 15px rgba(14, 254, 246, 0.6);
-      background: rgba(0, 0, 0, 0.35);
+      border-color: #0efeef;
+      box-shadow: 0 0 15px rgba(14, 254, 239, 0.4);
+      background: rgba(5, 5, 8, 0.85);
     }
 
     .send-btn {
-      width: 130px;
+      width: 120px;
       height: 48px;
-      background: #0EFEF6;
-      border: none;
-      border-radius: 8px;
-      color: #0B0000;
-      font-size: 1.1rem;
+      background: linear-gradient(135deg, rgba(14, 254, 239, 0.25) 0%, rgba(14, 254, 239, 0.05) 100%);
+      border: 1px solid #0efeef;
+      border-radius: 10px;
+      color: #0efeef;
+      font-family: 'Cinzel', 'Shippori Mincho', serif;
+      font-size: 1rem;
       font-weight: 700;
+      letter-spacing: 0.1em;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 0 15px rgba(14, 254, 246, 0.5);
+      box-shadow: 0 0 12px rgba(14, 254, 239, 0.2);
     }
 
     .send-btn:hover {
-      background: #ffffff;
-      color: #000000;
-      box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
-      transform: scale(1.02);
+      background: #0efeef;
+      color: #050508;
+      box-shadow: 0 0 25px rgba(14, 254, 239, 0.7);
+      transform: translateY(-1px);
     }
 
     /* 3. 別世界との接続を切るボタン */
@@ -211,39 +295,60 @@
     }
 
     .disconnect-btn {
-      width: min(530px, 85vw);
-      height: 60px;
-      background: rgba(255, 255, 255, 0.85);
-      border: 2px solid rgba(255, 255, 255, 0.9);
-      border-radius: 50px;
+      width: min(480px, 85vw);
+      height: 50px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
+      border: 1px solid #d4af37;
+      border-radius: 30px;
       backdrop-filter: blur(10px);
-      color: #0B0000;
-      font-size: clamp(1.1rem, 2vw, 1.4rem);
-      font-weight: 700;
+      color: #f3e5ab;
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+      letter-spacing: 0.15em;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(212, 175, 55, 0.15);
     }
 
     .disconnect-btn:hover {
-      background: #ff4b4b;
-      border-color: #ff4b4b;
-      color: #ffffff;
-      box-shadow: 0 0 25px rgba(255, 75, 75, 0.7);
-      transform: scale(1.02);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-color: #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+      transform: translateY(-2px);
     }
 
-    @keyframes blink {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
+    /* アニメーション定義 */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.8); }
+    }
+
+    @keyframes hologram {
+      0%, 100% { filter: drop-shadow(0 0 5px rgba(14, 254, 239, 0.6)); }
+      50% { filter: drop-shadow(0 0 12px rgba(14, 254, 239, 0.9)); }
+    }
+
+    @keyframes textGlow {
+      0%, 100% { opacity: 0.6; text-shadow: 0 0 5px #0efeef; }
+      50% { opacity: 1; text-shadow: 0 0 15px #0efeef, 0 0 20px #0efeef; }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <div class="scanline"></div>
+
     <div class="main-wrapper">
+
+      <div class="header-area">
+        <h1 class="header-title">Parallel World Dialogue</h1>
+        <div class="signal-status">
+          <span class="signal-dot"></span>
+          <span>PARALLEL LINK: ACTIVE</span>
+        </div>
+      </div>
 
       <!-- 1. 会話エリア -->
       <div class="chat-box" id="chatBox">
@@ -251,12 +356,12 @@
         {% for h in history %}
           {% if h.role == 'ai' %}
             <div class="message-row ai">
-              <div class="avatar ai">AI</div>
+              <div class="avatar ai">SELF</div>
               <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
             </div>
           {% else %}
             <div class="message-row user">
-              <div class="avatar user">人</div>
+              <div class="avatar user">YOU</div>
               <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
             </div>
           {% endif %}
@@ -270,9 +375,9 @@
         <button class="send-btn" onclick="sendMessage()">送信</button>
       </div>
 
-     <!-- 3. 切断ボタン（/finish へ遷移） -->
+      <!-- 3. 切断ボタン（/finish へ遷移） -->
       <div class="disconnect-btn-wrapper">
-        <button class="disconnect-btn" onclick="location.href='/finish';">別世界との接続を切る</button>
+        <button class="disconnect-btn" onclick="location.href='/finish';">接続を切る</button>
       </div>
 
     </div>
@@ -286,11 +391,11 @@
 
       const chatBox = document.getElementById('chatBox');
 
-      // ユーザーメッセージを画面に即座に追加
+      // ユーザーメッセージを画面に追加
       const userRow = document.createElement('div');
       userRow.className = 'message-row user';
       userRow.innerHTML = `
-        <div class="avatar user">人</div>
+        <div class="avatar user">YOU</div>
         <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(text)}</div>
       `;
       chatBox.appendChild(userRow);
@@ -298,20 +403,20 @@
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      //  AI思考中の演出（ローディング表示）を追加
+      //  AI思考中の演出（異世界通信中ローディング）
       const loadingRow = document.createElement('div');
       loadingRow.className = 'message-row ai';
       loadingRow.id = 'loadingRow';
       loadingRow.innerHTML = `
-        <div class="avatar ai">AI</div>
-        <div class="bubble" style="white-space: pre-wrap; opacity: 0.8;">
-          <span style="display: inline-block; animation: blink 1.4s infinite;">…パラレル通信中…</span>
+        <div class="avatar ai">SELF</div>
+        <div class="bubble" style="white-space: pre-wrap; color: #0efeef; background: rgba(14, 254, 239, 0.08);">
+          <span style="display: inline-block; animation: textGlow 1.2s infinite alternate;">✦通信中…</span>
         </div>
       `;
       chatBox.appendChild(loadingRow);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // サーバー（Flaskの /send-message）へメッセージを送信
+      // サーバー（Flaskの /send-message）へ送信
       try {
         const response = await fetch('/send-message', {
           method: 'POST',
@@ -331,7 +436,7 @@
         const aiRow = document.createElement('div');
         aiRow.className = 'message-row ai';
         aiRow.innerHTML = `
-          <div class="avatar ai">AI</div>
+          <div class="avatar ai">SELF</div>
           <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(data.reply)}</div>
         `;
         chatBox.appendChild(aiRow);
@@ -339,7 +444,6 @@
 
       } catch (error) {
         console.error('通信エラー:', error);
-        // エラー時も思考中表示を消す
         const loadingElement = document.getElementById('loadingRow');
         if (loadingElement) loadingElement.remove();
       }
