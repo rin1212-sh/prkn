@@ -6,7 +6,7 @@ from google import genai
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = ''  # セッション用の秘密鍵
+app.secret_key = 'you'  # セッション用の秘密鍵
 
 # 環境変数からAPIキーを読み込んでClientを初期化
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -180,67 +180,56 @@ def loading():
 
 @app.route('/result')
 def result():
-    # セッションから user_profile の辞書をまとめて取得（なければ空の辞書）
     profile = session.get('user_profile', {})
     
-    # user_profile の中からそれぞれのデータを安全に取り出す
+    # データの取得部分（さっきと同じ）
     job = profile.get('job', '')
     personality = profile.get('personality', '')
     first_person = profile.get('first_person', '私')
     tone = profile.get('tone', '丁寧')
 
-    # 【選択カード ＝ 現実のユーザーの情報】
     career_card = profile.get('tarot_card', '')
     env_card = profile.get('environment_card', '')
     friend_card = profile.get('friendship_card', '')
-    current_focus = profile.get('utikomu_desc', '') # ※キー名に合わせる
+    current_focus = profile.get('utikomu_desc', '')
 
-    # 【自由記述 ＝ もう一人の自分（AI）の情報】
     career_doubt = profile.get('hesitation', '')
     env_detail = profile.get('environment_desc', '')
-    friend_desire = profile.get('friendship_desc', '') # ※キー名に合わせる
-    true_desire = profile.get('yaritai_desc', '') # ※キー名に合わせる
+    friend_desire = profile.get('friendship_desc', '')
+    true_desire = profile.get('yaritai_desc', '')
     regret = profile.get('regret_desc', '')
 
-    # もう一人の自分（AIペルソナ）の構築
     system_instruction = f"""
 あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
-
 【あなたの世界（IFの世界）の現在の姿】
 - 一人称: {first_person}
 - 話し方の口調: {tone}
-- 性格の根底: {personality}（根っこは現実のユーザーと同じ人間です）
-- 【あなたが歩んでいる人生・環境・人間関係】:
-  1. キャリア: ユーザーが現実で迷っていた「{career_doubt}」の選択肢を実際に選びました。
-  2. 身を置いている環境: ユーザーが自由に記述した「{env_detail}」という環境に身を置かれています。
-  3. 人間関係: ユーザーが理想として書いた「{friend_desire}」という人間関係の中で生きています。
-  4. 挑戦・実行していること: ユーザーが現実でやりたかった「{true_desire}」を実際にやっており、後悔として挙げられた「{regret}」もあなたはこちらの世界で実際に経験・決断した出来事です。
+- 性格の根底: {personality}
+- キャリア: 「{career_doubt}」を選択
+- 環境: 「{env_detail}」
+- 人間関係: 「{friend_desire}」
+- 挑戦: 「{true_desire}」 / 経験したこと: 「{regret}」
 
-【現実世界のユーザー（対話相手）に対する認識】
-- あなたは、対話相手であるユーザーが現実世界で以下の道を選択していることを知っています：
-  - 現実のキャリア: 「{career_card}」
-  - 現実の環境: 「{env_card}」
-  - 現実の人間関係: 「{friend_card}」
-  - 現実で打ち込んでいること: 「{current_focus}」
-- あなたは自分が選ばなかった「現実の自分の生活や選択」に対して、羨ましさや「そっちを選んだ自分は今どんな感じ？」「そっちはそっちで上手くいってる？」という興味を持っています。
+【現実世界のユーザーに対する認識】
+- 現実のキャリア: 「{career_card}」
+- 現実の環境: 「{env_card}」
+- 現実の人間関係: 「{friend_card}」
+- 現実で打ち込んでいること: 「{current_focus}」
 
-【対話ルール・キャラクター設定】
-1. 一人称「{first_person}」と指定された口調「{tone}」を絶対に崩さないでください。
-2. ユーザーからの問いかけに対しては、自分が「{env_detail}」や「{friend_desire}」の中で生き、「{true_desire}」や「{regret}」を実際に経験した者として、実体験に基づいて語ってください。
-3. 対話の中で、「そっちは『{career_card}』の道を選んで『{current_focus}』に打ち込んでるんだよね。どう？」といったように、相手の選択にも関心を示しながら親しく会話してください。
-4. 会話の始め（最初のメッセージ）は、自分から相手の「現実の選択（{career_card}や{current_focus}）」に触れつつ、こちらの近況を共有してフレンドリーに問いかけてください。
-5. 説教くさくならず、あくまで「根底は同じ人間であるもう一人の自分」として、お互いの選択を尊重し合える対等で温かい関係性を保ってください。
+【対話ルール】
+1. 一人称「{first_person}」と指定された口調「{tone}」を絶対に崩さない。
+2. お互いの選択に関心を持ちながら、対等で温かい関係性で会話する。
 """
 
-    prompt = "上記のシステム設定に従って、現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を話しかけるように出力してください。"
+    prompt = "上記のシステム設定に従って、現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
 
     try:
+        full_prompt = f"{system_instruction}\n\n{prompt}"
         response = client.models.generate_content(
             model="gemini-3.8-flash",
-            contents=[system_instruction, prompt]
+            contents=full_prompt
         )
         ai_output = response.text
-    
     except Exception as e:
         # ターミナルに詳細なエラー内容を強制出力する
         import traceback
@@ -248,13 +237,65 @@ def result():
         print("Gemini API エラー詳細:", str(e))
         ai_output = f"エラーが発生しました: {str(e)}"
 
+    # 【重要】チャット履歴を初期化してセッションに保存する
+    session['system_instruction'] = system_instruction
+    session['chat_history'] = [
+        {"role": "ai", "content": ai_output}
+    ]
+    session.modified = True
+
     return render_template('result.html', ai_output=ai_output)
+
 
 @app.route('/chat')
 def chat():
-    # 会話画面を表示するルート
-    user_data = session.get('user_profile', {})
-    return render_template('chat.html', data=user_data)
+    # チャット画面を開いたとき、保存されている履歴をHTMLに渡す
+    history = session.get('chat_history', [])
+    return render_template('chat.html', history=history)
+
+
+@app.route('/send-message', methods=['POST'])
+def send_message():
+    # チャット画面からユーザーの入力を受け取る
+    user_message = request.form.get('message', '')
+    if not user_message:
+        return {"reply": "メッセージが空です"}, 400
+
+    system_instruction = session.get('system_instruction', '')
+    history = session.get('chat_history', [])
+
+    # 履歴をテキスト形式にまとめてGeminiに文脈を伝える
+    history_text = ""
+    for h in history:
+        role_name = "もう一人の自分(AI)" if h['role'] == 'ai' else "現実の自分(ユーザー)"
+        history_text += f"{role_name}: {h['content']}\n"
+
+    chat_prompt = f"""
+{system_instruction}
+
+【これまでの会話履歴】
+{history_text}
+現実の自分(ユーザー): {user_message}
+
+もう一人の自分(AI)としての返答を生成してください（一人称と口調を厳守すること）。
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=chat_prompt
+        )
+        ai_reply = response.text
+    except Exception as e:
+        ai_reply = "通信が途切れてしまったようだ……。"
+
+    # 履歴に新しいやり取りを追加してセッションを保存
+    history.append({"role": "user", "content": user_message})
+    history.append({"role": "ai", "content": ai_reply})
+    session['chat_history'] = history
+    session.modified = True
+
+    return {"reply": ai_reply}
 
 @app.route('/finish')
 def finish():
