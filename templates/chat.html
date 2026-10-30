@@ -44,29 +44,33 @@
       z-index: 1;
     }
 
-    /* 全ての要素をオーバーレイの上に配置 */
+    /* メインエリアの高さ制限（全体が画面内に収まるように調整） */
     .main-wrapper {
       position: relative;
       z-index: 2;
       width: min(1187px, 94vw);
-      height: 100%;
+      height: 100vh;
+      max-height: calc(100vh - 5rem); /* 上下パディング分を引く */
       display: flex;
       flex-direction: column;
-      gap: 1.2rem;
+      gap: 1rem;
       align-items: center;
+      justify-content: space-between;
     }
 
-    /* 1. チャットログ表示エリア */
+    /* 1. チャットログ表示エリア（高さを固定してスクロール可能に） */
     .chat-box {
       width: 100%;
       flex: 1;
+      height: 55vh; /* 高さを画面の55%に制限 */
+      min-height: 300px;
       background: rgba(217, 217, 217, 0.15);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 16px;
       box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.3);
       padding: 1.5rem;
-      overflow-y: auto;
+      overflow-y: auto; /* 縦スクロールを有効化 */
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
@@ -228,6 +232,12 @@
       box-shadow: 0 0 25px rgba(255, 75, 75, 0.7);
       transform: scale(1.02);
     }
+
+    @keyframes blink {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -238,29 +248,19 @@
       <!-- 1. 会話エリア -->
       <div class="chat-box" id="chatBox">
         
-        <!-- AI発言 -->
-        <div class="message-row ai">
-          <div class="avatar ai">AI</div>
-          <div class="bubble">
-            やあ、別の世界線を生きる私だよ。君があの時違う道を選択した世界の姿だ。何か聞いてみたいことはあるかい？
-          </div>
-        </div>
-
-        <!-- ユーザー発言 -->
-        <div class="message-row user">
-          <div class="avatar user">人</div>
-          <div class="bubble">
-            そっちの世界では、どんな仕事をしてどんな毎日を過ごしているの？
-          </div>
-        </div>
-
-        <!-- AI発言 -->
-        <div class="message-row ai">
-          <div class="avatar ai">AI</div>
-          <div class="bubble">
-            ここでは自分の直感を信じて新しいチームを立ち上げたんだ。大変なことも多いけれど、本音で語り合える仲間に囲まれて刺激的な日々を送っているよ。
-          </div>
-        </div>
+        {% for h in history %}
+          {% if h.role == 'ai' %}
+            <div class="message-row ai">
+              <div class="avatar ai">AI</div>
+              <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
+            </div>
+          {% else %}
+            <div class="message-row user">
+              <div class="avatar user">人</div>
+              <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
 
       </div>
 
@@ -279,37 +279,70 @@
   </div>
 
   <script>
-    // メッセージ送信機能（疑似動作）
-    function sendMessage() {
+    async function sendMessage() {
       const input = document.getElementById('messageInput');
       const text = input.value.trim();
       if (!text) return;
 
       const chatBox = document.getElementById('chatBox');
 
-      // ユーザーメッセージを追加
+      // ユーザーメッセージを画面に即座に追加
       const userRow = document.createElement('div');
       userRow.className = 'message-row user';
       userRow.innerHTML = `
         <div class="avatar user">人</div>
-        <div class="bubble">${escapeHTML(text)}</div>
+        <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(text)}</div>
       `;
       chatBox.appendChild(userRow);
 
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // 簡易AI返信ダミー（バックエンド構築時にリアルタイムAPIに置き換え）
-      setTimeout(() => {
+      //  AI思考中の演出（ローディング表示）を追加
+      const loadingRow = document.createElement('div');
+      loadingRow.className = 'message-row ai';
+      loadingRow.id = 'loadingRow';
+      loadingRow.innerHTML = `
+        <div class="avatar ai">AI</div>
+        <div class="bubble" style="white-space: pre-wrap; opacity: 0.8;">
+          <span style="display: inline-block; animation: blink 1.4s infinite;">…パラレル通信中…</span>
+        </div>
+      `;
+      chatBox.appendChild(loadingRow);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // サーバー（Flaskの /send-message）へメッセージを送信
+      try {
+        const response = await fetch('/send-message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'message=' + encodeURIComponent(text)
+        });
+
+        const data = await response.json();
+
+        // 思考中演出を削除
+        const loadingElement = document.getElementById('loadingRow');
+        if (loadingElement) loadingElement.remove();
+
+        // AIの返信を画面に追加
         const aiRow = document.createElement('div');
         aiRow.className = 'message-row ai';
         aiRow.innerHTML = `
           <div class="avatar ai">AI</div>
-          <div class="bubble">なるほど……君のいる世界線ではそう考えるんだね。面白いな。</div>
+          <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(data.reply)}</div>
         `;
         chatBox.appendChild(aiRow);
         chatBox.scrollTop = chatBox.scrollHeight;
-      }, 1000);
+
+      } catch (error) {
+        console.error('通信エラー:', error);
+        // エラー時も思考中表示を消す
+        const loadingElement = document.getElementById('loadingRow');
+        if (loadingElement) loadingElement.remove();
+      }
     }
 
     function handleKeyPress(e) {
