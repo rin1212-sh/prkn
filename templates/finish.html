@@ -246,8 +246,45 @@
     }
 
     .btn-next, .btn-save {
-      min-width: 320px;
+      min-width: 260px;
       background: rgba(0, 242, 254, 0.08);
+    }
+
+    .btn-copy {
+      min-width: 200px;
+      border-color: rgba(226, 194, 117, 0.4);
+      color: #e2c275;
+    }
+
+    .btn-copy:hover {
+      background: rgba(226, 194, 117, 0.15);
+      border-color: #e2c275;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(226, 194, 117, 0.4);
+    }
+
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(10, 25, 40, 0.95);
+      border: 1px solid #00f2fe;
+      color: #00f2fe;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+      z-index: 2000;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     /* モーダルダイアログ */
@@ -350,7 +387,7 @@
 
   <div class="bg-layer"></div>
 
-  <!-- ヘッダー (画像のデザインを継承) -->
+  <!-- ヘッダー -->
   <header class="header">
     <div class="header-title">PARALLEL WORLD DIALOGUE</div>
     <div class="status-badge">
@@ -390,11 +427,12 @@
     </div>
 
     <div class="button-group">
+      <button type="button" class="btn btn-copy" onclick="copyToClipboard()">全文コピー</button>
       <button type="button" class="btn btn-save" onclick="handleSave()">心に保存する</button>
     </div>
   </div>
 
-  <!-- ポップアップ確認画面 -->
+  <!-- モーダルダイアログ -->
   <div id="modal" class="modal-overlay">
     <div class="modal-box">
       <p class="modal-text">
@@ -408,6 +446,9 @@
     </div>
   </div>
 
+  <!-- トースト通知 -->
+  <div id="toast" class="toast">クリップボードにコピーしました</div>
+
   <script>
     const INITIAL_PAGE_URL = '/';
 
@@ -420,13 +461,14 @@
     }
 
     function handleEnd() {
-      if (INITIAL_PAGE_URL) {
+      if (INITIAL_PAGE_URL && INITIAL_PAGE_URL !== '#') {
         window.location.href = INITIAL_PAGE_URL;
       } else {
         resetToScreen1();
       }
     }
 
+    /* 「心に保存する」ボタン押下時は常に入力の有無にかかわらず確認モーダルを開く */
     function handleSave() {
       document.getElementById('modal').classList.add('active');
     }
@@ -437,7 +479,7 @@
 
     function confirmReset() {
       document.getElementById('modal').classList.remove('active');
-      if (INITIAL_PAGE_URL) {
+      if (INITIAL_PAGE_URL && INITIAL_PAGE_URL !== '#') {
         window.location.href = INITIAL_PAGE_URL;
       } else {
         resetToScreen1();
@@ -452,6 +494,41 @@
       document.getElementById('screen1').classList.remove('hidden');
       document.getElementById('screen1').classList.add('active');
     }
+
+    /* クリップボードへのコピー機能 */
+    function copyToClipboard() {
+      const input = document.getElementById('userInput');
+      if (!input.value.trim()) {
+        showToast('テキストが入力されていません');
+        return;
+      }
+      
+      navigator.clipboard.writeText(input.value).then(() => {
+        showToast('クリップボードにコピーしました');
+      }).catch(() => {
+        // フォールバック処理
+        input.select();
+        document.execCommand('copy');
+        showToast('クリップボードにコピーしました');
+      });
+    }
+
+    /* トースト通知表示 */
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    /* ESCキーでモーダルを閉じる */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
   </script>
 </body>
 </html>
