@@ -6,7 +6,7 @@ from google import genai
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'you'  # セッション用の秘密鍵
+app.secret_key = 'your_secret_key_here'  # セッション用の秘密鍵
 
 # 環境変数からAPIキーを読み込んでClientを初期化
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))

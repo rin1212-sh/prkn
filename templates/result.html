@@ -3,13 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parallel World Self - Result</title>
-  
-  <!-- タロット・ミステリアス風フォント（Cinzel & Shippori Mincho）の読み込み -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
-
+  <title>Parallel-World Self - Result</title>
   <style>
     * {
       box-sizing: border-box;
@@ -19,27 +13,26 @@
     body, html {
       width: 100%;
       min-height: 100vh;
-      font-family: 'Shippori Mincho', 'Cinzel', serif;
+      font-family: 'Inter', sans-serif;
       background: #000;
       color: #ffffff;
       overflow-x: hidden;
     }
 
-    /* 全体コンテナ */
+        /* 全体コンテナ（共通のメッシュグラデーション） */
     .container {
       width: 100vw;
       min-height: 100vh;
-      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat fixed;
+      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat;  
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3rem 1.5rem;
+      padding: 2.5rem 1.5rem;
       position: relative;
-      gap: 2.5rem;
     }
 
-    /* 接続後の異世界感を引き立てるグラデーション付き暗調オーバーレイ */
+    /* 背景画像の上に少し暗いオーバーレイを敷いて文字を見やすくする */
     .container::before {
       content: '';
       position: absolute;
@@ -47,97 +40,64 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at center, rgba(14, 254, 239, 0.08) 0%, rgba(5, 5, 16, 0.75) 100%);
+      background: rgba(0, 0, 0, 0.25);
       z-index: 1;
     }
 
-    .container > * {
+    /* コンテンツをオーバーレイの上に表示 */
+    .header-title,
+    .result-card,
+    .submit-btn-wrapper {
       position: relative;
       z-index: 2;
     }
 
-    /* ヘッダーエリア */
-    .header-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.6rem;
-      text-align: center;
-    }
-
-    .connection-badge {
-      font-size: clamp(0.85rem, 1.4vw, 1.05rem);
-      color: #0efeef;
-      letter-spacing: 0.25em;
-      text-shadow: 0 0 10px rgba(14, 254, 239, 0.8);
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .connection-badge::before, .connection-badge::after {
-      content: '✦';
-      font-size: 0.8em;
-    }
-
+    /* ヘッダータイトル（もう一人のあなた...） */
     .header-title {
-      font-size: clamp(2rem, 4.2vw, 3.4rem);
-      font-weight: 800;
-      color: #f7f3e8;
-      letter-spacing: 0.08em;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 4px 12px rgba(0,0,0,0.9);
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 700;
+      color: #F8F3F3;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
     }
 
-    /* 魔法陣・タロットフレーム（結果カード） */
+    /* 結果カード（淡いブルーのネオン枠 ＆ すりガラス） */
     .result-card {
-      position: relative;
-      width: min(950px, 92vw);
-      background: rgba(12, 16, 28, 0.75);
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      border-radius: 16px;
-      backdrop-filter: blur(14px);
-      padding: 3rem 2.5rem;
+      width: min(1000px, 92vw);
+      background: rgba(10, 15, 30, 0.65); /* 背景になじむ深めのダークカラー */
+      border: 4px solid #B2B4F7;
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      padding: 2.5rem 2rem;
       display: flex;
       flex-direction: column;
-      gap: 1.8rem;
-      box-shadow: 0 0 35px rgba(14, 254, 239, 0.15), 0 15px 45px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.1);
-      overflow: hidden;
+      gap: 2rem;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(178, 180, 247, 0.25);
     }
 
-    /* 額縁の四隅の装飾 */
-    .result-card::before {
-      content: '✦';
-      position: absolute;
-      top: 12px;
-      left: 16px;
-      color: rgba(212, 175, 55, 0.6);
-      font-size: 1.1rem;
+    /* 一言で表した要約タイトル */
+    .result-headline {
+      font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      line-height: 1.5;
     }
 
-    .result-card::after {
-      content: '✦';
-      position: absolute;
-      bottom: 12px;
-      right: 16px;
-      color: rgba(212, 175, 55, 0.6);
-      font-size: 1.1rem;
-    }
-
-    /* AIテキスト表示エリア */
+    /* 詳しい説明文エリア */
     .result-description {
-      font-size: clamp(1.05rem, 1.6vw, 1.25rem);
-      font-weight: 500;
-      color: #f0ede6;
-      line-height: 2;
-      background: rgba(20, 26, 42, 0.5);
-      padding: 2rem;
-      border-radius: 10px;
-      border: 1px solid rgba(14, 254, 239, 0.25);
-      letter-spacing: 0.05em;
-      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+      font-size: clamp(1rem, 1.6vw, 1.25rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.95);
+      line-height: 1.8;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
     }
 
-    /* 会話に進むボタン（次元跳躍用の光るボタン） */
+    /* 「会話に進む」ボタン */
     .submit-btn-wrapper {
       display: flex;
       justify-content: center;
@@ -145,28 +105,25 @@
     }
 
     .submit-btn {
-      width: min(340px, 80vw);
+      width: min(350px, 80vw);
       height: 65px;
-      background: rgba(14, 254, 239, 0.12);
-      border: 2px solid #0efeef;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.8);
       border-radius: 50px;
       backdrop-filter: blur(10px);
-      color: #f7f3e8;
-      font-family: 'Shippori Mincho', serif;
-      font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+      color: #0B0000;
+      font-size: clamp(1.2rem, 2vw, 1.5rem);
       font-weight: 700;
-      letter-spacing: 0.15em;
       cursor: pointer;
-      transition: all 0.4s ease;
-      box-shadow: 0 0 25px rgba(14, 254, 239, 0.3);
-      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
-
     .submit-btn:hover {
-      background: #0efeef;
-      color: #050b14;
-      box-shadow: 0 0 45px rgba(14, 254, 239, 0.9), 0 0 20px rgba(255, 255, 255, 0.8);
-      transform: scale(1.04);
+      background: #00F0FF;
+      border-color: #00F0FF;
+      color: #ffffff;
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.9);
+      transform: scale(1.03);
     }
   </style>
 </head>
@@ -174,20 +131,22 @@
 
   <div class="container">
     
-    <!-- ヘッダー -->
-    <div class="header-group">
-      <div class="connection-badge">PARALLEL DIMENSION CONNECTED</div>
-      <h1 class="header-title">もう一人のあなた...</h1>
-    </div>
+    <!-- ヘッダータイトル -->
+    <h1 class="header-title">もう一人のあなた...</h1>
 
-    <!-- 結果カードフレーム -->
+    <!-- 分析結果を包むカードフレーム -->
     <div class="result-card">
-      <div class="result-description" style="white-space: pre-wrap;">{{ ai_output }}</div>
+      
+      <!-- AIから生成されたメッセージを表示するエリア -->
+      <div class="result-description" style="white-space: pre-wrap;">
+        {{ ai_output }}
+      </div>
+
     </div>
 
-    <!-- 会話に進むボタン -->
+    <!-- 会話に進むボタン（/chat へ遷移） -->
     <div class="submit-btn-wrapper">
-      <button class="submit-btn" onclick="location.href='/chat';">会話に進む ➔</button>
+      <button class="submit-btn" onclick="location.href='/chat';">会話に進む</button>
     </div>
 
   </div>

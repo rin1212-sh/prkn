@@ -3,13 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parallel World Self - Loading</title>
-  
-  <!-- タロット・ミステリアス風フォント（Cinzel & Shippori Mincho）の読み込み -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
-
+  <title>Parallel-World Self - Loading</title>
   <style>
     * {
       box-sizing: border-box;
@@ -19,135 +13,61 @@
     body, html {
       width: 100%;
       min-height: 100vh;
-      font-family: 'Shippori Mincho', 'Cinzel', serif;
+      font-family: 'Inter', sans-serif;
       background: #000;
       color: #ffffff;
       overflow-x: hidden;
     }
 
-    /* 全体コンテナ (背景画像を haikei.png に設定) */
+    /* 全体コンテナ（共通のメッシュグラデーション ＆ 中央寄せ） */
     .container {
       width: 100vw;
       min-height: 100vh;
-      background: url("{{ url_for('static', filename='image/haikei.png') }}") center center / cover no-repeat fixed;
+      background: linear-gradient(135deg, #E8557D 0%, #F39C59 25%, #E3CA65 50%, #1BB1A5 85%, #0F8DA2 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2.5rem 1.5rem;
       position: relative;
-      gap: 3rem;
+      gap: 2.5rem;
     }
 
-    /* 暗めの幻想的オーバーレイ */
-    .container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(5, 5, 14, 0.75);
-      z-index: 1;
-    }
-
-    .container > * {
-      position: relative;
-      z-index: 2;
-    }
-
-    /* 魔法陣風・多重ローディングサークル */
-    .magic-circle-wrapper {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* 外側の金枠リング（時計回り） */
-    .loader-outer {
-      position: absolute;
-      width: 120px;
-      height: 120px;
-      border: 2px dashed rgba(212, 175, 55, 0.6);
-      border-top: 2px solid #d4af37;
+    /* ネオンのローディングサークル（回転アニメーション） */
+    .loader-spinner {
+      width: 90px;
+      height: 90px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top: 4px solid #00F0FF;
       border-radius: 50%;
-      animation: spinClockwise 3s linear infinite;
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+      animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
     }
 
-    /* 内側の蒼光リング（反時計回り） */
-    .loader-inner {
-      position: absolute;
-      width: 85px;
-      height: 85px;
-      border: 2px solid rgba(14, 254, 239, 0.2);
-      border-bottom: 3px solid #0efeef;
-      border-radius: 50%;
-      animation: spinCounterClockwise 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
-      box-shadow: 0 0 25px rgba(14, 254, 239, 0.6);
-    }
-
-    /* 中央のタロットシンボル */
-    .magic-center-icon {
-      font-size: 1.8rem;
-      color: #0efeef;
-      text-shadow: 0 0 12px #0efeef;
-      animation: pulseGlow 1.8s ease-in-out infinite;
-    }
-
-    @keyframes spinClockwise {
+    @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
 
-    @keyframes spinCounterClockwise {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(-360deg); }
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.3; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.1); }
-    }
-
-    /* テキストブロック */
-    .text-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.2rem;
-      text-align: center;
-    }
-
-    /* メインタイトル */
+    /* メインメッセージ */
     .loading-title {
-      font-size: clamp(1.6rem, 3.5vw, 2.8rem);
-      font-weight: 800;
-      color: #f7f3e8;
-      letter-spacing: 0.08em;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.4), 0 4px 12px rgba(0,0,0,0.9);
-      line-height: 1.4;
-    }
-
-    /* 異世界交信のサブメッセージ */
-    .loading-sub {
-      font-size: clamp(1rem, 1.8vw, 1.3rem);
+      font-size: clamp(1.8rem, 3.8vw, 3.2rem);
       font-weight: 700;
-      color: #0efeef;
-      letter-spacing: 0.15em;
-      text-shadow: 0 0 12px rgba(14, 254, 239, 0.7);
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      animation: pulse 1.8s ease-in-out infinite;
+      color: #F8F3F3;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      letter-spacing: 0.05em;
     }
 
-    .loading-sub::before, .loading-sub::after {
-      content: '✦';
-      font-size: 0.85em;
+    /* wait... のテキスト（ほのかに点滅する演出） */
+    .loading-sub {
+      font-size: clamp(1.2rem, 2vw, 1.8rem);
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.8);
+      letter-spacing: 0.1em;
+      animation: pulse 1.5s ease-in-out infinite;
     }
 
     @keyframes pulse {
@@ -160,23 +80,20 @@
 
   <div class="container">
     
-    <!-- 魔法陣風の多重ローディングサークル -->
-    <div class="magic-circle-wrapper">
-      <div class="loader-outer"></div>
-      <div class="loader-inner"></div>
-      <div class="magic-center-icon">✦</div>
-    </div>
+    <!-- ローディングサークル -->
+    <div class="loader-spinner"></div>
 
-    <!-- メッセージエリア -->
-    <div class="text-group">
-      <h1 class="loading-title">接続できるまでお待ちください</h1>
-      <div class="loading-sub">平行世界のあなたと接続中</div>
-    </div>
+    <!-- メインテキスト -->
+    <h1 class="loading-title">もう一人のあなたを生成しています</h1>
+
+    <!-- サブテキスト (wait...) -->
+    <div class="loading-sub">wait...</div>
 
   </div>
 
   <script>
-    // 約3.5秒後に結果画面（/result）へ自動移動
+    // 【おまけの自動遷移スクリプト】
+    // 3.5秒後に自動でチャット画面（chat.html）へ進む仕組み（必要に応じて調整してね！）
     setTimeout(() => {
       window.location.href = '/result';
     }, 3500);
