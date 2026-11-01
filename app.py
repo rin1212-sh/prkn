@@ -264,7 +264,7 @@ def send_message():
     history = session.get('chat_history', [])
 
     # 直近4件（2往復）のみ抽出して文脈を軽量化
-    recent_history = history[-4:] if len(history) > 4 else history
+    recent_history = history[-10:] if len(history) > 10 else history
     history_text = ""
     for h in recent_history:
         role_name = "もう一人の自分(AI)" if h.get('role') == 'ai' else "現実の自分(ユーザー)"
@@ -322,7 +322,7 @@ def send_message():
     updated_history.append({"role": "user", "content": user_message})
     updated_history.append({"role": "ai", "content": ai_reply})
 
-    session['chat_history'] = updated_history[-4:]
+    session['chat_history'] = updated_history[-10:]
     session.modified = True
 
     return {"reply": ai_reply}
