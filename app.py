@@ -2,6 +2,8 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from dotenv import load_dotenv
 from google import genai
+import time
+from google.genai.errors import ServerError
 
 load_dotenv()
 
@@ -182,11 +184,10 @@ def loading():
 def result():
     profile = session.get('user_profile', {})
     
-    # データの取得部分（さっきと同じ）
     job = profile.get('job', '')
     personality = profile.get('personality', '')
-    first_person = profile.get('first_person', '私')
-    tone = profile.get('tone', '丁寧')
+    first_person = profile.get('first_person', '')
+    tone = profile.get('tone', '')
 
     career_card = profile.get('tarot_card', '')
     env_card = profile.get('environment_card', '')
@@ -226,18 +227,17 @@ def result():
     try:
         full_prompt = f"{system_instruction}\n\n{prompt}"
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.8-flash",  # モデル名が正しいか確認
             contents=full_prompt
         )
         ai_output = response.text
     except Exception as e:
-        # ターミナルに詳細なエラー内容を強制出力する
         import traceback
         traceback.print_exc()
         print("Gemini API エラー詳細:", str(e))
         ai_output = f"エラーが発生しました: {str(e)}"
 
-    # 【重要】チャット履歴を初期化してセッションに保存する
+    # セッションの容量圧迫を防ぐため、システム設定と履歴を初期化
     session['system_instruction'] = system_instruction
     session['chat_history'] = [
         {"role": "ai", "content": ai_output}
@@ -256,7 +256,6 @@ def chat():
 
 @app.route('/send-message', methods=['POST'])
 def send_message():
-    # チャット画面からユーザーの入力を受け取る
     user_message = request.form.get('message', '')
     if not user_message:
         return {"reply": "メッセージが空です"}, 400
@@ -264,35 +263,66 @@ def send_message():
     system_instruction = session.get('system_instruction', '')
     history = session.get('chat_history', [])
 
-    # 履歴をテキスト形式にまとめてGeminiに文脈を伝える
+    # 直近4件（2往復）のみ抽出して文脈を軽量化
+    recent_history = history[-4:] if len(history) > 4 else history
     history_text = ""
-    for h in history:
-        role_name = "もう一人の自分(AI)" if h['role'] == 'ai' else "現実の自分(ユーザー)"
-        history_text += f"{role_name}: {h['content']}\n"
+    for h in recent_history:
+        role_name = "もう一人の自分(AI)" if h.get('role') == 'ai' else "現実の自分(ユーザー)"
+        history_text += f"{role_name}: {h.get('content', '')}\n"
 
-    chat_prompt = f"""
-{system_instruction}
+    chat_prompt = f"""{system_instruction}
 
 【これまでの会話履歴】
 {history_text}
 現実の自分(ユーザー): {user_message}
 
-もう一人の自分(AI)としての返答を生成してください（一人称と口調を厳守すること）。
-"""
+もう一人の自分(AI)としての返答を生成してください（一人称と口調を厳守すること）。"""
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=chat_prompt
-        )
-        ai_reply = response.text
-    except Exception as e:
-        ai_reply = "通信が途切れてしまったようだ……。"
+    # 試行するモデルの優先順位リスト（混雑時に別モデルへ自動切替）
+    candidate_models = [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+        "gemini-1.5-flash"
+    ]
 
-    # 履歴に新しいやり取りを追加してセッションを保存
-    history.append({"role": "user", "content": user_message})
-    history.append({"role": "ai", "content": ai_reply})
-    session['chat_history'] = history
+    ai_reply = None
+
+    # モデル切替 ＆ 指数バックオフ付きリトライ
+    for model_name in candidate_models:
+        if ai_reply:
+            break
+        
+        for attempt in range(2):  # 各モデル2回まで試行
+            try:
+                print(f"[{model_name}] へリクエスト送信中... (試行 {attempt + 1})")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=chat_prompt
+                )
+                if response.text:
+                    ai_reply = response.text
+                    print(f"[{model_name}] で応答取得成功")
+                    break
+            except ServerError:
+                wait_time = (attempt + 1) * 2  # 2秒, 4秒
+                print(f"[{model_name}] 503高負荷エラー。{wait_time}秒後に再試行/別モデル切替を行います...")
+                time.sleep(wait_time)
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"[{model_name}] エラー:", str(e))
+                break
+
+    # 全モデル・リトライ失敗時のフォールバック応答
+    if not ai_reply:
+        ai_reply = "（次元の波長が乱れているようだ……。時間を置いてもう一度話しかけてみてくれ。）"
+
+    # 履歴の更新
+    updated_history = list(history)
+    updated_history.append({"role": "user", "content": user_message})
+    updated_history.append({"role": "ai", "content": ai_reply})
+
+    session['chat_history'] = updated_history[-4:]
     session.modified = True
 
     return {"reply": ai_reply}
