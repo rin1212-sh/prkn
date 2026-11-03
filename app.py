@@ -223,15 +223,15 @@ def result():
 
     prompt = "現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
 
+    # 「1つ目がダメなら次を試す」順番待ちリスト
     candidate_models = [
         "gemini-3.8-flash",
-        "gemini-3.5-flash",
         "gemini-1.5-flash"
     ]
 
     ai_output = None
 
-    # 503エラー時に自動リトライ＆モデル切替を実行
+    # モデルを順番に切り替えながら試すループ
     for model_name in candidate_models:
         if ai_output:
             break
@@ -243,8 +243,7 @@ def result():
                     model=model_name,
                     contents=prompt,
                     config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        thinking_config=types.ThinkingConfig(thinking_budget=0)
+                        system_instruction=system_instruction
                     )
                 )
                 if response.text:
@@ -252,15 +251,16 @@ def result():
                     print(f"[result: {model_name}] で応答取得成功")
                     break
             except ServerError:
-                # 503混雑時は0.5秒待って再試行（または次モデルへ）
-                print(f"[result: {model_name}] 503高負荷エラー。再試行します...")
+                print(f"[result: {model_name}] 503高負荷エラー。次の試行または別モデルへ切替えます...")
                 time.sleep(0.5)
             except Exception as e:
                 import traceback
                 traceback.print_exc()
                 print(f"[result: {model_name}] エラー:", str(e))
+                # エラーが起きてもプログラムを止めず、次のモデルのループへ進む
                 break
 
+    # 全てのモデル・リトライが失敗した場合の予備テキスト
     if not ai_output:
         ai_output = "（次元の波長が乱れていて、うまく言葉が届かなかったようだ……。もう一度試してみてほしい。）"
 
@@ -271,7 +271,6 @@ def result():
     session.modified = True
 
     return render_template('result.html', ai_output=ai_output)
-
 
 @app.route('/chat')
 def chat():
