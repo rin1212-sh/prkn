@@ -306,8 +306,8 @@ def send_message():
 
     # 試行するモデルの優先順位リスト（混雑時に別モデルへ自動切替）
     candidate_models = [
-        "gemini-3.8-flash",
         "gemini-3.5-flash",
+        "gemini-3.8-flash",
         "gemini-1.5-flash"
     ]
 
