@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 import time
 from google.genai.errors import ServerError
+from google.genai import types
 
 load_dotenv()
 
@@ -200,8 +201,7 @@ def result():
     true_desire = profile.get('yaritai_desc', '')
     regret = profile.get('regret_desc', '')
 
-    system_instruction = f"""
-あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
+    system_instruction = f"""あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
 【あなたの世界（IFの世界）の現在の姿】
 - 一人称: {first_person}
 - 話し方の口調: {tone}
@@ -219,25 +219,51 @@ def result():
 
 【対話ルール】
 1. 一人称「{first_person}」と指定された口調「{tone}」を絶対に崩さない。
-2. お互いの選択に関心を持ちながら、対等で温かい関係性で会話する。
-"""
+2. お互いの選択に関心を持ちながら、対等で温かい関係性で会話する。"""
 
-    prompt = "上記のシステム設定に従って、現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
+    prompt = "現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
 
-    try:
-        full_prompt = f"{system_instruction}\n\n{prompt}"
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",  # モデル名が正しいか確認
-            contents=full_prompt
-        )
-        ai_output = response.text
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print("Gemini API エラー詳細:", str(e))
-        ai_output = f"エラーが発生しました: {str(e)}"
+    candidate_models = [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+        "gemini-1.5-flash"
+    ]
 
-    # セッションの容量圧迫を防ぐため、システム設定と履歴を初期化
+    ai_output = None
+
+    # 503エラー時に自動リトライ＆モデル切替を実行
+    for model_name in candidate_models:
+        if ai_output:
+            break
+        
+        for attempt in range(2):
+            try:
+                print(f"[result: {model_name}] へリクエスト送信中... (試行 {attempt + 1})")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    )
+                )
+                if response.text:
+                    ai_output = response.text
+                    print(f"[result: {model_name}] で応答取得成功")
+                    break
+            except ServerError:
+                # 503混雑時は0.5秒待って再試行（または次モデルへ）
+                print(f"[result: {model_name}] 503高負荷エラー。再試行します...")
+                time.sleep(0.5)
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"[result: {model_name}] エラー:", str(e))
+                break
+
+    if not ai_output:
+        ai_output = "（次元の波長が乱れていて、うまく言葉が届かなかったようだ……。もう一度試してみてほしい。）"
+
     session['system_instruction'] = system_instruction
     session['chat_history'] = [
         {"role": "ai", "content": ai_output}
