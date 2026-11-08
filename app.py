@@ -353,6 +353,12 @@ def send_message():
 
     return {"reply": ai_reply}
 
+@app.route('/debug-session')
+def debug_session():
+    # セッションの中身とサイズを文字にして表示する
+    session_data = dict(session)
+    return f"Session contents: {session_data}"
+
 @app.route('/finish')
 def finish():
     # すべての体験が終了した画面
