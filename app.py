@@ -308,7 +308,7 @@ def send_message():
     candidate_models = [
         "gemini-3.5-flash",
         "gemini-3.8-flash",
-        "gemini-1.5-flash"
+        "gemini-3.7-flash"
     ]
 
     ai_reply = None
