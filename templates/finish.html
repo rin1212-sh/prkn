@@ -450,7 +450,7 @@
   <div id="toast" class="toast">クリップボードにコピーしました</div>
 
   <script>
-    const INITIAL_PAGE_URL = '/';
+    const INITIAL_PAGE_URL = "{{ url_for('reset_all') }}";
 
     function goToScreen2() {
       document.getElementById('screen1').classList.remove('active');

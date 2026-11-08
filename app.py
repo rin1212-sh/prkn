@@ -17,6 +17,7 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # 【変更】一番最初は index.html（トップ画面）を表示する
 @app.route('/')
 def index():
+    session.clear()
     return render_template('index.html')
 
 # 【変更】「別世界の自分と話す」を押したあとのプロフィール入力画面
@@ -356,6 +357,13 @@ def send_message():
 def finish():
     # すべての体験が終了した画面
     return render_template('finish.html')
+
+@app.route('/reset-all')
+def reset_all():
+    # セッションのデータをすべて消去
+    session.clear()
+    print("すべてのデータをリセットしました")
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
