@@ -227,7 +227,7 @@ def result():
    # 「1つ目がダメなら次を試す」順番待ちリスト
     candidate_models = [
         "gemini-3.8-flash",
-        "gemini-3.5-flash"
+        "gemini-3.5-flash",
         "gemini-3.7-flash"
     ]
 
@@ -261,7 +261,7 @@ def result():
                 print(f"[result: {model_name}] エラー:", str(e))
                 # エラーが起きてもプログラムを止めず、次のモデルのループへ進む
                 break
-            
+
     # 全てのモデル・リトライが失敗した場合の予備テキスト
     if not ai_output:
         ai_output = "（次元の波長が乱れていて、うまく言葉が届かなかったようだ……。もう一度試してみてほしい。）"
