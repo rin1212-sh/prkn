@@ -183,9 +183,12 @@
     }
 
     .avatar.ai {
-      background: radial-gradient(circle, rgba(14, 254, 246, 0.25) 0%, rgba(5, 5, 8, 0.85) 100%);
+      background: radial-gradient(circle 200px, rgba(14, 254, 246, 0.25) 0%, rgba(5, 5, 8, 0.85) 100%);
       border: 1.5px solid #0efeef;
       color: #0efeef;
+      font-size: 0.55rem;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
       text-shadow: 0 0 8px rgba(14, 254, 239, 0.8);
       box-shadow: 0 0 12px rgba(14, 254, 239, 0.3);
       animation: hologram 4s infinite alternate;
@@ -356,12 +359,12 @@
         {% for h in history %}
           {% if h.role == 'ai' %}
             <div class="message-row ai">
-              <div class="avatar ai">SELF</div>
+              <div class="avatar ai">Another Me</div>
               <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
             </div>
           {% else %}
             <div class="message-row user">
-              <div class="avatar user">YOU</div>
+              <div class="avatar user">Me</div>
               <div class="bubble" style="white-space: pre-wrap;">{{ h.content }}</div>
             </div>
           {% endif %}
@@ -395,7 +398,7 @@
       const userRow = document.createElement('div');
       userRow.className = 'message-row user';
       userRow.innerHTML = `
-        <div class="avatar user">YOU</div>
+        <div class="avatar user">Me</div>
         <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(text)}</div>
       `;
       chatBox.appendChild(userRow);
@@ -408,7 +411,7 @@
       loadingRow.className = 'message-row ai';
       loadingRow.id = 'loadingRow';
       loadingRow.innerHTML = `
-        <div class="avatar ai">SELF</div>
+        <div class="avatar ai">Another Me</div>
         <div class="bubble" style="white-space: pre-wrap; color: #0efeef; background: rgba(14, 254, 239, 0.08);">
           <span style="display: inline-block; animation: textGlow 1.2s infinite alternate;">✦通信中…</span>
         </div>
@@ -436,7 +439,7 @@
         const aiRow = document.createElement('div');
         aiRow.className = 'message-row ai';
         aiRow.innerHTML = `
-          <div class="avatar ai">SELF</div>
+          <div class="avatar ai">Another Me</div>
           <div class="bubble" style="white-space: pre-wrap;">${escapeHTML(data.reply)}</div>
         `;
         chatBox.appendChild(aiRow);

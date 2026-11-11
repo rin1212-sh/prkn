@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 import time
 from google.genai.errors import ServerError
+from google.genai import types
 
 load_dotenv()
 
@@ -16,6 +17,7 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 # 【変更】一番最初は index.html（トップ画面）を表示する
 @app.route('/')
 def index():
+    session.clear()
     return render_template('index.html')
 
 # 【変更】「別世界の自分と話す」を押したあとのプロフィール入力画面
@@ -200,8 +202,7 @@ def result():
     true_desire = profile.get('yaritai_desc', '')
     regret = profile.get('regret_desc', '')
 
-    system_instruction = f"""
-あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
+    system_instruction = f"""あなたは、ユーザーが過去の人生で「選ばなかった道」を選び、歩んでいる平行世界（パラレルワールド）の【もう一人の自分】です。
 【あなたの世界（IFの世界）の現在の姿】
 - 一人称: {first_person}
 - 話し方の口調: {tone}
@@ -219,25 +220,52 @@ def result():
 
 【対話ルール】
 1. 一人称「{first_person}」と指定された口調「{tone}」を絶対に崩さない。
-2. お互いの選択に関心を持ちながら、対等で温かい関係性で会話する。
-"""
+2. お互いの選択に関心を持ちながら、対等で温かい関係性で会話する。"""
 
-    prompt = "上記のシステム設定に従って、現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
+    prompt = "現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
 
-    try:
-        full_prompt = f"{system_instruction}\n\n{prompt}"
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",  # モデル名が正しいか確認
-            contents=full_prompt
-        )
-        ai_output = response.text
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print("Gemini API エラー詳細:", str(e))
-        ai_output = f"エラーが発生しました: {str(e)}"
+   # 「1つ目がダメなら次を試す」順番待ちリスト
+    candidate_models = [
+        "gemini-3.8-flash",
+        "gemini-3.5-flash",
+        "gemini-3.7-flash"
+    ]
 
-    # セッションの容量圧迫を防ぐため、システム設定と履歴を初期化
+    ai_output = None
+
+    # モデルを順番に切り替えながら試すループ
+    for model_name in candidate_models:
+        if ai_output:
+            break
+        
+        for attempt in range(2):
+            try:
+                print(f"[result: {model_name}] へリクエスト送信中... (試行 {attempt + 1})")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction
+                    )
+                )
+                if response.text:
+                    ai_output = response.text
+                    print(f"[result: {model_name}] で応答取得成功")
+                    break
+            except ServerError:
+                print(f"[result: {model_name}] 503高負荷エラー。次の試行または別モデルへ切替えます...")
+                time.sleep(0.5)
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"[result: {model_name}] エラー:", str(e))
+                # エラーが起きてもプログラムを止めず、次のモデルのループへ進む
+                break
+
+    # 全てのモデル・リトライが失敗した場合の予備テキスト
+    if not ai_output:
+        ai_output = "（次元の波長が乱れていて、うまく言葉が届かなかったようだ……。もう一度試してみてほしい。）"
+
     session['system_instruction'] = system_instruction
     session['chat_history'] = [
         {"role": "ai", "content": ai_output}
@@ -245,7 +273,6 @@ def result():
     session.modified = True
 
     return render_template('result.html', ai_output=ai_output)
-
 
 @app.route('/chat')
 def chat():
@@ -264,7 +291,7 @@ def send_message():
     history = session.get('chat_history', [])
 
     # 直近4件（2往復）のみ抽出して文脈を軽量化
-    recent_history = history[-10:] if len(history) > 10 else history
+    recent_history = history[-6:] if len(history) > 10 else history
     history_text = ""
     for h in recent_history:
         role_name = "もう一人の自分(AI)" if h.get('role') == 'ai' else "現実の自分(ユーザー)"
@@ -280,9 +307,9 @@ def send_message():
 
     # 試行するモデルの優先順位リスト（混雑時に別モデルへ自動切替）
     candidate_models = [
-        "gemini-3.8-flash",
         "gemini-3.5-flash",
-        "gemini-1.5-flash"
+        "gemini-3.8-flash",
+        "gemini-3.7-flash"
     ]
 
     ai_reply = None
@@ -327,10 +354,23 @@ def send_message():
 
     return {"reply": ai_reply}
 
+@app.route('/debug-session')
+def debug_session():
+    # セッションの中身とサイズを文字にして表示する
+    session_data = dict(session)
+    return f"Session contents: {session_data}"
+
 @app.route('/finish')
 def finish():
     # すべての体験が終了した画面
     return render_template('finish.html')
+
+@app.route('/reset-all')
+def reset_all():
+    # セッションのデータをすべて消去
+    session.clear()
+    print("すべてのデータをリセットしました")
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
