@@ -188,36 +188,29 @@ def loading():
 # 並行処理用の関数は関数の外に定義しておく
 def fetch_model_response(model_name, prompt, system_instruction, stop_event):
     """単一モデルに対してリクエストを送る関数"""
-    for attempt in range(2):
-        # すでに他のモデルが成功していたら即終了する
+    if stop_event.is_set():
+        return None
+
+    try:
+        print(f"[{model_name}] リクエスト送信中...", flush=True)
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
+        )
         if stop_event.is_set():
             return None
-        
 
-        try:
-            print(f"[{model_name}] リクエスト送信中... (試行 {attempt + 1})")
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction
-                )
-            )
-            if stop_event.is_set():
-                print(f"[{model_name}] 他のモデルが先に成功したため破棄しました")
-                return None
-            
-            if response and response.text:
-                return (model_name, response.text)
-        except Exception as e:
-            # 他のモデルがすでに成功済みならエラーログも出さずに終了
-            if stop_event.is_set():
-                print(f"[{model_name}] 他のモデルが先に成功したため破棄しました（エラー破棄）")
-                return None
-            print(f"[{model_name}] エラー (試行 {attempt + 1}): {e}", flush=True)
-            time.sleep(0.5)
+        if response and response.text:
+            return (model_name, response.text)
+
+    except Exception as e:
+        if not stop_event.is_set():
+            print(f"[{model_name}] 失敗・タイムアウト: {e}", flush=True)
+
     return None
-
 
 @app.route('/result')
 def result():
@@ -264,7 +257,7 @@ def result():
     candidate_models = [
         "gemini-3.8-flash",
         "gemini-3.5-flash",
-        "gemini-3.7-flash"
+        "gemini-3.7-flash",
     ]
 
     ai_output = None
@@ -331,9 +324,10 @@ def send_message():
 
     # 試行するモデルの優先順位リスト（混雑時に別モデルへ自動切替）
     candidate_models = [
-        "gemini-3.5-flash",
         "gemini-3.8-flash",
-        "gemini-3.7-flash"
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-2.5-flash",  # ← 3.x系が全滅(503)している時の高速バックアップ
     ]
 
     ai_reply = None
