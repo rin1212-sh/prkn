@@ -5,6 +5,9 @@ from google import genai
 import time
 from google.genai.errors import ServerError
 from google.genai import types
+import concurrent.futures
+import threading
+from flask import render_template, session
 
 load_dotenv()
 
@@ -182,6 +185,33 @@ def loading():
     # ローディング画面を表示する（HTML内のJSで数秒後に /result へ飛ぶ）
     return render_template('loading.html')
 
+# 並行処理用の関数は関数の外に定義しておく
+def fetch_model_response(model_name, prompt, system_instruction, stop_event):
+    """単一モデルに対してリクエストを送る関数"""
+    if stop_event.is_set():
+        return None
+
+    try:
+        print(f"[{model_name}] リクエスト送信中...", flush=True)
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
+        )
+        if stop_event.is_set():
+            return None
+
+        if response and response.text:
+            return (model_name, response.text)
+
+    except Exception as e:
+        if not stop_event.is_set():
+            print(f"[{model_name}] 失敗・タイムアウト: {e}", flush=True)
+
+    return None
+
 @app.route('/result')
 def result():
     profile = session.get('user_profile', {})
@@ -224,45 +254,34 @@ def result():
 
     prompt = "現実世界の自分に向けて最初のメッセージ（挨拶と近況報告、相手への問いかけ）を出力してください。"
 
-   # 「1つ目がダメなら次を試す」順番待ちリスト
     candidate_models = [
         "gemini-3.8-flash",
         "gemini-3.5-flash",
-        "gemini-3.7-flash"
+        "gemini-3.7-flash",
+        "gemini-3.5-flash-lite"
     ]
 
     ai_output = None
+    stop_event = threading.Event()  # 成功通知用のフラグ
 
-    # モデルを順番に切り替えながら試すループ
-    for model_name in candidate_models:
-        if ai_output:
-            break
-        
-        for attempt in range(2):
-            try:
-                print(f"[result: {model_name}] へリクエスト送信中... (試行 {attempt + 1})")
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction
-                    )
-                )
-                if response.text:
-                    ai_output = response.text
-                    print(f"[result: {model_name}] で応答取得成功")
-                    break
-            except ServerError:
-                print(f"[result: {model_name}] 503高負荷エラー。次の試行または別モデルへ切替えます...")
-                time.sleep(0.5)
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                print(f"[result: {model_name}] エラー:", str(e))
-                # エラーが起きてもプログラムを止めず、次のモデルのループへ進む
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(candidate_models))
+    future_to_model = {
+        executor.submit(fetch_model_response, model, prompt, system_instruction, stop_event): model
+        for model in candidate_models
+    }
+
+    try:
+        for future in concurrent.futures.as_completed(future_to_model):
+            result_data = future.result()
+            if result_data:
+                successful_model, text = result_data
+                ai_output = text
+                stop_event.set()  # 他スレッドへ「もう決まったから止まれ」と合図
+                print(f"[{successful_model}] から最速で応答を取得しました")
                 break
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
 
-    # 全てのモデル・リトライが失敗した場合の予備テキスト
     if not ai_output:
         ai_output = "（次元の波長が乱れていて、うまく言葉が届かなかったようだ……。もう一度試してみてほしい。）"
 
@@ -273,7 +292,6 @@ def result():
     session.modified = True
 
     return render_template('result.html', ai_output=ai_output)
-
 @app.route('/chat')
 def chat():
     # チャット画面を開いたとき、保存されている履歴をHTMLに渡す
@@ -307,9 +325,10 @@ def send_message():
 
     # 試行するモデルの優先順位リスト（混雑時に別モデルへ自動切替）
     candidate_models = [
-        "gemini-3.5-flash",
         "gemini-3.8-flash",
-        "gemini-3.7-flash"
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-2.5-flash",  # ← 3.x系が全滅(503)している時の高速バックアップ
     ]
 
     ai_reply = None
